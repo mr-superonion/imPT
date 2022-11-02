@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 __version__ = ''
 fname = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
-    "alens",
+    "lensPT",
     "__version__.py")
 with open(fname, 'r') as ff:
     exec(ff.read())
@@ -16,9 +16,9 @@ with open(fname, 'r') as ff:
 # ]
 
 setup(
-    name='alens',
+    name='lensPT',
     version=__version__,
-    description='Analytical Estimator Lensing Distortion',
+    description='Estimator of Lensing Perturbations',
     author='Xiangchong Li',
     author_email='mr.superonion@hotmail.com',
     python_requires='>=3.8',
@@ -31,8 +31,8 @@ setup(
         'matplotlib',
     ],
     packages=find_packages(),
-    scripts=scripts,
+    # scripts=scripts,
     include_package_data=True,
     zip_safe=False,
-    url = "https://github.com/mr-superonion/alens/",
+    url = "https://github.com/mr-superonion/lensPT/",
 )
