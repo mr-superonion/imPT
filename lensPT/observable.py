@@ -28,8 +28,8 @@ class Observable(object):
     def __init__(self, **kwargs):
         self.meta = {}
         self.meta.update(**kwargs)
-        self._set_obs_func(self.original_func)
         self.mode_names = [MISSING]
+        self._set_obs_func(self.base_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
         self._obs_grad_func = grad(self._obs_func)
         return
@@ -37,9 +37,9 @@ class Observable(object):
     def _set_obs_func(self, func):
         self._obs_func = func
 
-    def original_func(*args):
+    def base_func(*args):
         raise RuntimeError("Your observable code needs to "
-            "over-ride the original_func method so it knows how to "
+            "over-ride the base_func method so it knows how to "
             "load the observed data"
             )
 
@@ -106,14 +106,14 @@ class Observable(object):
 class fpfs_e1_Li2018(Observable):
     def __init__(self, Const):
         super(fpfs_e1_Li2018, self).__init__(Const=Const)
-        self._set_obs_func(self.original_func)
+        self._set_obs_func(self.base_func)
         self.mode_names = [
                 "fpfs_M22c",
                 "fpfs_M00",
                 ]
         return
 
-    def original_func(self, x):
+    def base_func(self, x):
         e1 = x[self.aind("fpfs_M22c")] \
             / ( x[self.aind("fpfs_M00")] + self.meta["Const"] )
         return e1
@@ -122,14 +122,14 @@ class fpfs_e1_Li2018(Observable):
 class fpfs_e2_Li2018(Observable):
     def __init__(self, Const):
         super(fpfs_e2_Li2018, self).__init__(Const=Const)
-        self._set_obs_func(self.original_func)
+        self._set_obs_func(self.base_func)
         self.mode_names = [
                 "fpfs_M22s",
                 "fpfs_M00",
                 ]
         return
 
-    def original_func(self, x):
+    def base_func(self, x):
         e1 = x[self.aind("fpfs_M22s")] \
             / ( x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
