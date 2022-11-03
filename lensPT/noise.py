@@ -14,7 +14,6 @@
 # python lib
 
 import jax.numpy as jnp
-from jax import jacfwd, jacrev
 
 
 class noise_bias_perturb2nd(object):
@@ -25,8 +24,10 @@ class noise_bias_perturb2nd(object):
         """Initializes noise bias function object using a obs_func object and
         a noise covariance matrix
         """
-        if not callable(obs_func):
-            raise ValueError("obs_fun is not callable")
+        if not hasattr(obs_func, "evaluate"):
+            raise ValueError("obs_fun does not has evaluation")
+        if not hasattr(obs_func, "hessian"):
+            raise ValueError("obs_fun does not has hessian")
         self.update_all(obs_func, noise_cov)
         return
 
@@ -37,18 +38,9 @@ class noise_bias_perturb2nd(object):
 
     def update_all(self, obs_func, noise_cov):
         """Updates the observable funciton and the noise covariance"""
-        self._obs_func = obs_func
-        self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
+        self._obs_func_obj = obs_func
         self.update_noise_cov(noise_cov)
         return
-
-    def obs_func(self, x):
-        """Calls the input observable function"""
-        return jnp.apply_along_axis(self._obs_func, axis=-1, arr=x)
-
-    def obs_hessian_fun(self, x):
-        """Calls the hessian matrix function of observable function"""
-        return jnp.apply_along_axis(self._obs_hessian_func, axis=-1, arr=x)
 
     def check_vector(self, x):
         """checks whether a data vector meets the requirements"""
@@ -60,9 +52,11 @@ class noise_bias_perturb2nd(object):
 
     def _noise_bias_func(self, x):
         indexes = [[-2, -1], [-2, -1]]
-        b = jnp.tensordot(self._obs_hessian_func(x), self.noise_cov, indexes) / (-2.0)
+        b = jnp.tensordot(self._obs_func_obj._obs_hessian_func(x),
+                self.noise_cov, indexes) / (-2.0)
         return b
 
-    def __call__(self, x):
-        """Applies the noise bias funciton to a numpy array"""
+    def evaluate(self, x):
+        """Evaluate the noise bias funciton"""
+        x = self._obs_func_obj.prepare_array(x)
         return jnp.apply_along_axis(self._noise_bias_func, axis=-1, arr=x)

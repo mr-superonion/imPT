@@ -24,11 +24,9 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         'numpy',
-        'scipy',
         'schwimmbad',
-        'astropy',
         'jax',
-        'matplotlib',
+        'fpfs',
     ],
     packages=find_packages(),
     # scripts=scripts,

@@ -142,5 +142,4 @@ class fpfs_w_Li2022(Observable):
         return
 
     def _obs_func(self, x):
-        print(MISSING)
         pass
