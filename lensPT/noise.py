@@ -18,7 +18,8 @@ from jax import jacfwd, jacrev
 
 
 class noise_bias_perturb2nd(object):
-    """A Class to calculate the second-order noise perturbation"""
+    """A Functional Class to derive the second-order noise perturbation
+    function."""
 
     def __init__(self, obs_func, noise_cov):
         """Initializes noise bias function object using a obs_func object and
