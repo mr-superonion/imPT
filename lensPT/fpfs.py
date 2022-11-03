@@ -17,47 +17,66 @@
 # You can define your own observable function
 
 
-from lensPT.observable import Observable
+import jax.numpy as jnp
+from .observable import Observable
+
 
 class E1(Observable):
     def __init__(self, Const):
         super(E1, self).__init__(Const=Const)
         self.mode_names = [
-                "fpfs_M22c",
-                "fpfs_M00",
-                ]
+            "fpfs_M22c",
+            "fpfs_M00",
+            "fpfs_M40",
+        ]
+        self.has_dg = True
         return
 
-    def base_func(self, x):
-        e1 = x[self.aind("fpfs_M22c")] \
-            / ( x[self.aind("fpfs_M00")] + self.meta["Const"] )
+    def _base_func(self, x):
+        e1 = x[self.aind("fpfs_M22c")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
+
+    def _dm_dg1(self,x):
+        dM22c =  0.
+        dM00 =  0.
+        return jnp.array([dM22c, dM00])
+
+    def _dm_dg2(self,x):
+        return jnp.array([0., 0., 0.])
 
 
 class E2(Observable):
     def __init__(self, Const):
         super(E2, self).__init__(Const=Const)
         self.mode_names = [
-                "fpfs_M22s",
-                "fpfs_M00",
-                ]
+            "fpfs_M22s",
+            "fpfs_M00",
+            "fpfs_M40",
+        ]
+        self.has_dg = True
         return
 
-    def base_func(self, x):
-        e1 = x[self.aind("fpfs_M22s")] \
-            / ( x[self.aind("fpfs_M00")] + self.meta["Const"])
+    def _base_func(self, x):
+        e1 = x[self.aind("fpfs_M22s")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
+
+    def _dm_dg1(self,x):
+        return jnp.array([0., 0., 0.])
+
+    def _dm_dg2(self,x):
+        dM22c =  0.
+        dM00 =  0.
+        return jnp.array([dM22c, dM00])
 
 
 class Weight(Observable):
-
     def __init__(self, **kwargs):
         super(Weight, self).__init__()
         self.mode_names = [
-                "fpfs_M22s",
-                "fpfs_M00",
-                ]
+            "fpfs_M22s",
+            "fpfs_M00",
+        ]
         return
 
-    def base_func(self, x):
+    def _base_func(self, x):
         pass

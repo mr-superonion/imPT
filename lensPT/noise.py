@@ -14,21 +14,22 @@
 # python lib
 
 import jax.numpy as jnp
-
-from lensPT.observable import Observable
+from .observable import Observable
 
 
 class noise_perturb2(Observable):
     """A Functional Class to derive the second-order noise perturbation
     function."""
 
-    def __init__(self, obs_func, noise_cov):
-        """Initializes noise bias function object using a obs_func object and
+    def __init__(self, obs_obj, noise_cov):
+        """Initializes noise bias function object using a obs_obj object and
         a noise covariance matrix
         """
-        if not hasattr(obs_func, "hessian"):
+        super(noise_perturb2, self).__init__()
+        if not hasattr(obs_obj, "hessian"):
             raise ValueError("obs_fun does not has hessian")
-        self.update_all(obs_func, noise_cov)
+        self.update_obs(obs_obj)
+        self.update_noise_cov(noise_cov)
         return
 
     def update_noise_cov(self, noise_cov):
@@ -36,10 +37,10 @@ class noise_perturb2(Observable):
         self.noise_cov = noise_cov
         return
 
-    def update_all(self, obs_func, noise_cov):
+    def update_obs(self, obs_obj):
         """Updates the observable funciton and the noise covariance"""
-        self._obs_func_obj = obs_func
-        self.update_noise_cov(noise_cov)
+        self.obs_obj = obs_obj
+        self.mode_names = obs_obj.mode_names
         return
 
     def check_vector(self, x):
@@ -51,7 +52,10 @@ class noise_perturb2(Observable):
             )
 
     def base_func(self, x):
+        """Returns the second-order noise response"""
         indexes = [[-2, -1], [-2, -1]]
-        b = jnp.tensordot(self._obs_func_obj._obs_hessian_func(x),
-                self.noise_cov, indexes) / 2.0
-        return b
+        res = (
+            jnp.tensordot(self.obs_obj._obs_hessian_func(x), self.noise_cov, indexes)
+            / 2.0
+        )
+        return res

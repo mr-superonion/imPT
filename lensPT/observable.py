@@ -29,21 +29,23 @@ class Observable(object):
         self.meta = {}
         self.meta.update(**kwargs)
         self.mode_names = [MISSING]
-        self._set_obs_func(self.base_func)
+        self._set_obs_func(self._base_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
         self._obs_grad_func = grad(self._obs_func)
+        self.has_dg = False
         return
 
     def _set_obs_func(self, func):
         self._obs_func = func
 
-    def base_func(*args):
-        raise RuntimeError("Your observable code needs to "
-            "over-ride the base_func method so it knows how to "
+    def _base_func(*args):
+        raise RuntimeError(
+            "Your observable code needs to "
+            "over-ride the _base_func method so it knows how to "
             "load the observed data"
-            )
+        )
 
-    def prepare_array(self,x):
+    def prepare_array(self, x):
         if not isinstance(x, np.ndarray):
             raise TypeError("Input array should be structured array")
         if x.dtype.names is None:
@@ -54,7 +56,7 @@ class Observable(object):
     def aind(self, colname):
         return self.mode_names.index(colname)
 
-    def _make_new(self,other):
+    def _make_new(self, other):
         obs = Observable()
         obs.meta = self.meta.update(other.meta)
         obs.mode_names = list(set(self.mode_names) | set(other.mode_names))
@@ -98,4 +100,3 @@ class Observable(object):
         """Calls the hessian matrix function of observable function"""
         x = self.prepare_array(x)
         return jnp.apply_along_axis(self._obs_hessian_func, axis=-1, arr=x)
-

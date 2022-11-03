@@ -14,45 +14,60 @@
 # python lib
 
 import jax.numpy as jnp
-from lensPT.observable import Observable
+from .observable import Observable
 
-class shear_perturb1(Observable):
+
+class Gperturb1(Observable):
     """A Functional Class to derive the second-order noise perturbation
     function."""
 
-    def __init__(self, obs_func, noise_cov):
-        """Initializes noise bias function object using a obs_func object and
+    def __init__(self, obs_obj):
+        """Initializes noise bias function object using a obs_obj object and
         a noise covariance matrix
         """
-        if not hasattr(obs_func, "evaluate"):
-            raise ValueError("obs_fun does not has evaluation")
-        if not hasattr(obs_func, "gradient"):
+        super(Gperturb1, self).__init__()
+        if not hasattr(obs_obj, "grad"):
             raise ValueError("obs_fun does not has gradient")
-        self.update_all(obs_func, noise_cov)
+        if not obs_obj.has_dg:
+            raise ValueError("input obs_obj should have shear response")
+        self.update_obs(obs_obj)
         return
 
-    def update_noise_cov(self, noise_cov):
-        """Updates the noise covariance"""
-        self.noise_cov = noise_cov
-        return
-
-    def update_all(self, obs_func, noise_cov):
+    def update_obs(self, obs_obj):
         """Updates the observable funciton and the noise covariance"""
-        self._obs_func_obj = obs_func
-        self.update_noise_cov(noise_cov)
+        self.obs_obj = obs_obj
+        self.mode_names = obs_obj.mode_names
         return
 
-    def check_vector(self, x):
-        """checks whether a data vector meets the requirements"""
-        ndata = x.shape[-1]
-        if self.noise_cov.shape != (ndata, ndata):
-            raise ValueError(
-                "input data should have length %d" % self.noise_cov.shape[0]
-            )
 
-    def base_func(self, x):
-        indexes = [[-2, -1], [-2, -1]]
-        b = jnp.tensordot(self._obs_func_obj._obs_hessian_func(x),
-                self.noise_cov, indexes) / (-2.0)
-        return b
+class g1_perturb1(Gperturb1):
+    """A Functional Class to derive the second-order noise perturbation
+    function."""
 
+    def __init__(self, obs_obj):
+        """Initializes noise bias function object using a obs_obj object and
+        a noise covariance matrix
+        """
+        super(g1_perturb1, self).__init__(obs_obj)
+        return
+
+    def _base_func(self, x):
+        """Returns the first-order shear response"""
+        res = jnp.dot(self.obs_obj._obs_grad_func(x), self.obs_obj._dm_dg1(x))
+        return res
+
+class g2_perturb1(Gperturb1):
+    """A Functional Class to derive the second-order noise perturbation
+    function."""
+
+    def __init__(self, obs_obj):
+        """Initializes noise bias function object using a obs_obj object and
+        a noise covariance matrix
+        """
+        super(g2_perturb1, self).__init__(obs_obj)
+        return
+
+    def _base_func(self, x):
+        """Returns the first-order shear response"""
+        res = jnp.dot(self.obs_obj._obs_grad_func(x), self.obs_obj._dm_dg2(x))
+        return res
