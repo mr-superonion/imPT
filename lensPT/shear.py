@@ -56,6 +56,7 @@ class g1_perturb1(Gperturb1):
         res = jnp.dot(self.obs_obj._obs_grad_func(x), self.obs_obj._dm_dg1(x))
         return res
 
+
 class g2_perturb1(Gperturb1):
     """A Functional Class to derive the second-order noise perturbation
     function."""

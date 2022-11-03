@@ -36,13 +36,13 @@ class E1(Observable):
         e1 = x[self.aind("fpfs_M22c")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
 
-    def _dm_dg1(self,x):
-        dM22c =  0.
-        dM00 =  0.
+    def _dm_dg1(self, x):
+        dM22c = 0.0
+        dM00 = 0.0
         return jnp.array([dM22c, dM00])
 
-    def _dm_dg2(self,x):
-        return jnp.array([0., 0., 0.])
+    def _dm_dg2(self, x):
+        return jnp.array([0.0, 0.0, 0.0])
 
 
 class E2(Observable):
@@ -60,12 +60,12 @@ class E2(Observable):
         e1 = x[self.aind("fpfs_M22s")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
 
-    def _dm_dg1(self,x):
-        return jnp.array([0., 0., 0.])
+    def _dm_dg1(self, x):
+        return jnp.array([0.0, 0.0, 0.0])
 
-    def _dm_dg2(self,x):
-        dM22c =  0.
-        dM00 =  0.
+    def _dm_dg2(self, x):
+        dM22c = 0.0
+        dM00 = 0.0
         return jnp.array([dM22c, dM00])
 
 
