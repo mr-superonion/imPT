@@ -13,7 +13,7 @@
 #
 # python lib
 
-# This is only a simple example
+# This is only a simple example of shear estimator
 # You can define your own observable function
 
 
@@ -29,6 +29,7 @@ class E1(Observable):
             "fpfs_M00",
             "fpfs_M40",
         ]
+        self.nmodes = len(self.mode_names)
         self.has_dg = True
         return
 
@@ -42,7 +43,9 @@ class E1(Observable):
         return jnp.array([dM22c, dM00])
 
     def _dm_dg2(self, x):
-        return jnp.array([0.0, 0.0, 0.0])
+        """this is spin-4 part, which equals zero (rotational symmetry)
+        """
+        return jnp.zeros(self.nmodes)
 
 
 class E2(Observable):
@@ -53,6 +56,7 @@ class E2(Observable):
             "fpfs_M00",
             "fpfs_M40",
         ]
+        self.nmodes = len(self.mode_names)
         self.has_dg = True
         return
 
@@ -61,7 +65,9 @@ class E2(Observable):
         return e1
 
     def _dm_dg1(self, x):
-        return jnp.array([0.0, 0.0, 0.0])
+        """This is spin-4 part, which equals zero (rotational symmetry)
+        """
+        return jnp.zeros(self.nmodes)
 
     def _dm_dg2(self, x):
         dM22c = 0.0
@@ -75,7 +81,9 @@ class Weight(Observable):
         self.mode_names = [
             "fpfs_M22s",
             "fpfs_M00",
+            "fpfs_M40",
         ]
+        self.nmodes = len(self.mode_names)
         return
 
     def _base_func(self, x):
