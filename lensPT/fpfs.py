@@ -20,6 +20,26 @@
 import jax.numpy as jnp
 from .observable import Observable
 
+def tsfunc2(x, mu=0.0, sigma=1.5):
+    """Returns the weight funciton [deriv=0], or the *multiplicative factor* to
+    the weight function for first order derivative [deriv=1]. This is for C2
+    funciton
+
+    Args:
+        deriv (int):    whether do derivative [deriv=1] or not [deriv=0]
+        x (ndarray):    input data vector
+        mu (float):     center of the cut
+        sigma (float):  width of the selection function
+    Returns:
+        out (ndarray):  the weight funciton [deriv=0], or the *multiplicative
+                        factor* to the weight function for first order
+                        derivative [deriv=1]
+    """
+    t = (x - mu) / sigma
+    def func(t):
+        return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
+    return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
+
 
 class E1(Observable):
     def __init__(self, Const):
@@ -82,11 +102,16 @@ class Weight(Observable):
     def __init__(self, **kwargs):
         super(Weight, self).__init__()
         self.mode_names = [
-            "fpfs_M22s",
             "fpfs_M00",
             "fpfs_M40",
+            "fpfs_M22s",
         ]
+        for _ in range(8):
+            self.mode_names.append("fpfs_v%d" %_)
+            self.mode_names.append("fpfs_v%dr1" %_)
+            self.mode_names.append("fpfs_v%dr2" %_)
         self.nmodes = len(self.mode_names)
+        self.has_dg = True
         return
 
     def _base_func(self, x):

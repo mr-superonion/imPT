@@ -51,11 +51,14 @@ class noise_perturb2(Observable):
                 "input data should have length %d" % self.noise_cov.shape[0]
             )
 
-    def base_func(self, x):
+    def _base_func(self, x):
         """Returns the second-order noise response"""
         indexes = [[-2, -1], [-2, -1]]
         res = (
-            jnp.tensordot(self.obs_obj._obs_hessian_func(x), self.noise_cov, indexes)
-            / 2.0
+            jnp.tensordot(
+                self.obs_obj._obs_hessian_func(x),
+                self.noise_cov,
+                indexes,
+                ) / 2.0
         )
         return res
