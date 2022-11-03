@@ -15,8 +15,10 @@
 
 import jax.numpy as jnp
 
+from lensPT.observable import Observable
 
-class noise_bias_perturb2nd(object):
+
+class noise_perturb2(Observable):
     """A Functional Class to derive the second-order noise perturbation
     function."""
 
@@ -24,8 +26,6 @@ class noise_bias_perturb2nd(object):
         """Initializes noise bias function object using a obs_func object and
         a noise covariance matrix
         """
-        if not hasattr(obs_func, "evaluate"):
-            raise ValueError("obs_fun does not has evaluation")
         if not hasattr(obs_func, "hessian"):
             raise ValueError("obs_fun does not has hessian")
         self.update_all(obs_func, noise_cov)
@@ -50,13 +50,8 @@ class noise_bias_perturb2nd(object):
                 "input data should have length %d" % self.noise_cov.shape[0]
             )
 
-    def _noise_bias_func(self, x):
+    def base_func(self, x):
         indexes = [[-2, -1], [-2, -1]]
         b = jnp.tensordot(self._obs_func_obj._obs_hessian_func(x),
-                self.noise_cov, indexes) / (-2.0)
+                self.noise_cov, indexes) / 2.0
         return b
-
-    def evaluate(self, x):
-        """Evaluate the noise bias funciton"""
-        x = self._obs_func_obj.prepare_array(x)
-        return jnp.apply_along_axis(self._noise_bias_func, axis=-1, arr=x)
