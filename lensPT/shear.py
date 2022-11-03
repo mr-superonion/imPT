@@ -1,4 +1,4 @@
-# FPFS shear estimator
+# lensPT autodiff pipline
 # Copyright 20221031 Xiangchong Li.
 #
 # This program is free software: you can redistribute it and/or modify
