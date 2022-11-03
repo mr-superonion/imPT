@@ -34,13 +34,15 @@ class E1(Observable):
         return
 
     def _base_func(self, x):
-        e1 = x[self.aind("fpfs_M22c")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
+        e1 = x[self.aind("fpfs_M22c")] / \
+                (x[self.aind("fpfs_M00")] + self.meta["Const"])
         return e1
 
     def _dm_dg1(self, x):
-        dM22c = 0.0
-        dM00 = 0.0
-        return jnp.array([dM22c, dM00])
+        dM22c = 1. / jnp.sqrt(2.) * \
+                (x[self.aind("fpfs_M00")] - x[self.aind("fpfs_M40")])
+        dM00 = -jnp.sqrt(2.) * x[self.aind("fpfs_M22c")]
+        return jnp.array([dM22c, dM00, 0.])
 
     def _dm_dg2(self, x):
         """this is spin-4 part, which equals zero (rotational symmetry)
@@ -70,9 +72,10 @@ class E2(Observable):
         return jnp.zeros(self.nmodes)
 
     def _dm_dg2(self, x):
-        dM22c = 0.0
-        dM00 = 0.0
-        return jnp.array([dM22c, dM00])
+        dM22s = 1. / jnp.sqrt(2.) * \
+                (x[self.aind("fpfs_M00")] - x[self.aind("fpfs_M40")])
+        dM00 = -jnp.sqrt(2.) * x[self.aind("fpfs_M22s")]
+        return jnp.array([dM22s, dM00, 0.])
 
 
 class Weight(Observable):
