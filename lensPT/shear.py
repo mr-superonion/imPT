@@ -18,11 +18,11 @@ from .observable import Observable
 
 
 class Gperturb1(Observable):
-    """A Functional Class to derive the second-order noise perturbation
-    function."""
+    """A Base Class to derive the first-order shear perturbation
+    for an observable."""
 
     def __init__(self, obs_obj):
-        """Initializes noise bias function object using a obs_obj object and
+        """Initializes shear response object using a obs_obj object and
         a noise covariance matrix
         """
         super(Gperturb1, self).__init__()
@@ -34,19 +34,18 @@ class Gperturb1(Observable):
         return
 
     def update_obs(self, obs_obj):
-        """Updates the observable funciton and the noise covariance"""
+        """Updates the observable funciton."""
         self.obs_obj = obs_obj
         self.mode_names = obs_obj.mode_names
         return
 
 
 class g1_perturb1(Gperturb1):
-    """A Functional Class to derive the second-order noise perturbation
-    function."""
+    """A Functional Class to derive the first-order shear perturbation
+    for an observable function."""
 
     def __init__(self, obs_obj):
-        """Initializes noise bias function object using a obs_obj object and
-        a noise covariance matrix
+        """Initializes shear response object using an ObsObject
         """
         super(g1_perturb1, self).__init__(obs_obj)
         return
@@ -58,12 +57,11 @@ class g1_perturb1(Gperturb1):
 
 
 class g2_perturb1(Gperturb1):
-    """A Functional Class to derive the second-order noise perturbation
-    function."""
+    """A Functional Class to derive the first-order shear perturbation for an
+    observable function."""
 
     def __init__(self, obs_obj):
-        """Initializes noise bias function object using a obs_obj object and
-        a noise covariance matrix
+        """Initializes shear response object using an ObsObject
         """
         super(g2_perturb1, self).__init__(obs_obj)
         return

@@ -40,6 +40,27 @@ def tsfunc2(x, mu=0.0, sigma=1.5):
         return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
     return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
 
+def fpfs_basis_mapping(basis_name,x):
+    if basis_name == "fpfs_M22c":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M22s":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M20":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M00":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M00":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M20":
+        return jnp.zeros_like(x)
+    elif basis_name == "fpfs_M40":
+        # TODO: XL: Incldue the shear response of M40 in the future. This is
+        # not required in the FPFS shear estimation (v1~v3), so I set it to
+        # zero here (If you are interested in it, please contact me.)
+        return jnp.zeros_like(x)
+    else:
+        raise ValueError("basis_name: %s is not supported" %basis_name)
+
 
 class E1(Observable):
     def __init__(self, Const):
@@ -65,7 +86,7 @@ class E1(Observable):
         return jnp.array([dM22c, dM00, 0.])
 
     def _dm_dg2(self, x):
-        """this is spin-4 part, which equals zero (rotational symmetry)
+        """This is spin-4 part, which is set to zero (rotational symmetry)
         """
         return jnp.zeros(self.nmodes)
 
@@ -87,7 +108,7 @@ class E2(Observable):
         return e1
 
     def _dm_dg1(self, x):
-        """This is spin-4 part, which equals zero (rotational symmetry)
+        """This is spin-4 part, which is set to zero (rotational symmetry)
         """
         return jnp.zeros(self.nmodes)
 
