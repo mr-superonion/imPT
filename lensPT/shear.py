@@ -28,7 +28,7 @@ class Gperturb1(Observable):
         super(Gperturb1, self).__init__()
         if not hasattr(obs_obj, "grad"):
             raise ValueError("obs_fun does not has gradient")
-        if not obs_obj.has_dg:
+        if obs_obj.dg_obj is None:
             raise ValueError("input obs_obj should have shear response")
         self.update_obs(obs_obj)
         return
@@ -38,6 +38,12 @@ class Gperturb1(Observable):
         self.obs_obj = obs_obj
         self.mode_names = obs_obj.mode_names
         return
+
+    def _make_new(self):
+        obs = Observable()
+        obs.mode_names = list(set(self.obs_obj.mode_names)
+                | set(self.obs_obj.mode_names))
+        return obs
 
 
 class g1_perturb1(Gperturb1):
@@ -52,8 +58,14 @@ class g1_perturb1(Gperturb1):
 
     def _base_func(self, x):
         """Returns the first-order shear response"""
-        res = jnp.dot(self.obs_obj._obs_grad_func(x), self.obs_obj._dm_dg1(x))
+        res = jnp.dot(self.obs_obj._obs_grad_func(x), self._dm_dg(x))
         return res
+
+    def _dm_dg(self, x):
+        out = self.obs_obj.dg_obj.dm_dg(
+            x, self.mode_names, 1
+        )
+        return out
 
 
 class g2_perturb1(Gperturb1):
@@ -68,5 +80,11 @@ class g2_perturb1(Gperturb1):
 
     def _base_func(self, x):
         """Returns the first-order shear response"""
-        res = jnp.dot(self.obs_obj._obs_grad_func(x), self.obs_obj._dm_dg2(x))
+        res = jnp.dot(self.obs_obj._obs_grad_func(x), self._dm_dg(x))
         return res
+
+    def _dm_dg(self, x):
+        out = self.obs_obj.dg_obj.dm_dg(
+            x, self.mode_names, 2
+        )
+        return out

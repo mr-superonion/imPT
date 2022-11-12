@@ -23,6 +23,22 @@ import numpy.lib.recfunctions as rfn
 
 MISSING = "if_you_see_this_there_was_a_mistake_creating_an_observable"
 
+def prepare_array(x, colnames):
+    """Prepare a unstructured array from structrued array [read by fitsio]
+
+    Args:
+        x (ndarray):        structured ndarray
+        colnames (list):    a list of column names
+    Returns:
+        out (ndarray):      unstructured ndarray
+    """
+    if not isinstance(x, np.ndarray):
+        raise TypeError("Input array should be structured array")
+    if x.dtype.names is None:
+        out = x
+    else:
+        out = rfn.structured_to_unstructured(x[colnames], copy=False)
+    return out
 
 class Observable(object):
     def __init__(self, **kwargs):
@@ -32,7 +48,7 @@ class Observable(object):
         self._set_obs_func(self._base_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
         self._obs_grad_func = grad(self._obs_func)
-        self.has_dg = False
+        self.dg_obj = None
         return
 
     def _set_obs_func(self, func):
@@ -46,12 +62,7 @@ class Observable(object):
         )
 
     def prepare_array(self, x):
-        if not isinstance(x, np.ndarray):
-            raise TypeError("Input array should be structured array")
-        if x.dtype.names is None:
-            return x
-        else:
-            return rfn.structured_to_unstructured(x[self.mode_names], copy=False)
+        return prepare_array(x, self.mode_names)
 
     def aind(self, colname):
         return self.mode_names.index(colname)
