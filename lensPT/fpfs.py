@@ -54,14 +54,14 @@ class shapelets_shear(object):
         try:
             self.meta
         except AttributeError:
-            self.meta = {
-                "modes_tmp": [],  # used to call a funciton
-            }
+            self.meta = {}
         self.meta.update(**kwargs)
         try:
             self.meta2
         except AttributeError:
-            self.meta2 = {}
+            self.meta2 = {
+                "modes_tmp": [],  # used to call a funciton
+            }
         self.meta2.update(**kwargs)
         return
 
@@ -153,7 +153,7 @@ class weighted_e1(Observable, shapelets_shear):
             "fpfs_M00",
         ]
         self.nmodes = len(self.meta["modes"])
-        # NOTE: XL: Now I manually put dmode_names, which I know is not clever;
+        # NOTE: XL: I manually put dmode_names, which I know is not clever;
         # Will make a dictionary for that
         self.meta["modes_child"] = [
             "fpfs_M22c",
@@ -163,9 +163,35 @@ class weighted_e1(Observable, shapelets_shear):
         return
 
     def _base_func(self, x):
-        e1 = x[self.aind("fpfs_M22c")] / (x[self.aind("fpfs_M00")] + self.meta["Const"])
-        return e1
+        out = x[self.aind("fpfs_M22c")] / (
+                x[self.aind("fpfs_M00")] + self.meta["Const"]
+                )
+        return out
 
+
+class weighted_e2(Observable, shapelets_shear):
+    def __init__(self, Const):
+        super(weighted_e2, self).__init__(Const=Const)
+        self.umode_names = None
+        self.meta["modes"] = [
+            "fpfs_M22s",
+            "fpfs_M00",
+        ]
+        self.nmodes = len(self.meta["modes"])
+        # NOTE: XL: I manually put dmode_names, which I know is not clever;
+        # Will make a dictionary for that
+        self.meta["modes_child"] = [
+            "fpfs_M22s",
+            "fpfs_M00",
+            "fpfs_M40",
+        ]
+        return
+
+    def _base_func(self, x):
+        out = x[self.aind("fpfs_M22s")] / (
+                x[self.aind("fpfs_M00")] + self.meta["Const"]
+                )
+        return out
 
 # class peak_weight(Observable):
 #     def __init__(self, **kwargs):

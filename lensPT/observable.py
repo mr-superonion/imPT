@@ -60,13 +60,14 @@ class Observable(object):
                 "modes": [],  # current funciton modes
                 "modes_child": [],  # next-order funciton modes [dg]
                 "modes_parent": [],  # previous-order funciton modes [int g]
-                "modes_tmp": [],  # used to call a funciton
             }
         self.meta.update(**kwargs)
         try:
             self.meta2
         except AttributeError:
-            self.meta2 = {}
+            self.meta2 = {
+                "modes_tmp": [],  # used to call a funciton
+            }
         self.meta2.update(**kwargs)
         return
 

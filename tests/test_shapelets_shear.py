@@ -1,3 +1,16 @@
+# lensPT autodiff pipeline
+# Copyright 20221113 Xiangchong Li.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
 import fitsio
 import numpy as np
 import lensPT as lpt
@@ -21,7 +34,7 @@ assert data2.shape == (ndata, ncol), "prepared catalog has incorrect shape"
 
 def test_g1():
     print("testing for shapelets' g1 reponses")
-    shapelet_shear = lpt.fpfs.shapelet_shear_response(colnames)
+    shapelet_shear = lpt.fpfs.shapelets_shear(modes_tmp=colnames)
     out = shapelet_shear.dm_dg(
         data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 1
     )
@@ -30,7 +43,8 @@ def test_g1():
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22c")]
     res_20 = -np.sqrt(6.0) * data2[:, colnames.index("fpfs_M42c")]
     res_22c = (
-        1.0 / np.sqrt(2.0)
+        1.0
+        / np.sqrt(2.0)
         * (data2[:, colnames.index("fpfs_M00")] - data2[:, colnames.index("fpfs_M40")])
     )
     np.testing.assert_array_almost_equal(res_00, out[:, colnames.index("fpfs_M00")])
@@ -44,7 +58,7 @@ def test_g1():
 
 def test_g2():
     print("testing for shapelets' g2 reponses")
-    shapelet_shear = lpt.fpfs.shapelet_shear_response(colnames)
+    shapelet_shear = lpt.fpfs.shapelets_shear(modes_tmp=colnames)
     out = shapelet_shear.dm_dg(
         data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 2
     )
@@ -53,7 +67,8 @@ def test_g2():
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22s")]
     res_20 = -np.sqrt(6.0) * data2[:, colnames.index("fpfs_M42s")]
     res_22s = (
-        1.0 / np.sqrt(2.0)
+        1.0
+        / np.sqrt(2.0)
         * (data2[:, colnames.index("fpfs_M00")] - data2[:, colnames.index("fpfs_M40")])
     )
     np.testing.assert_array_almost_equal(res_00, out[:, colnames.index("fpfs_M00")])

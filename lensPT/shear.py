@@ -28,7 +28,7 @@ class Gperturb1(Observable):
         super(Gperturb1, self).__init__()
         if not hasattr(parent_obj, "grad"):
             raise ValueError("obs_fun does not has gradient")
-        if parent_obj.dg_obj is None:
+        if not hasattr(parent_obj, "dm_dg"):
             raise ValueError("input parent_obj should have shear response")
         self.update_parent(parent_obj)
         return
