@@ -66,7 +66,7 @@ class shapelets_shear(object):
         return
 
     def aind(self, colname):
-        return self.meta["modes_tmp"].index(colname)
+        return self.meta2["modes_tmp"].index(colname)
 
     def _dm_dg1(self, x, basis_name):
         if basis_name == "fpfs_M00":

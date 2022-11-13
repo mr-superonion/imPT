@@ -35,7 +35,9 @@ class Gperturb1(Observable):
 
     def update_parent(self, parent_obj):
         """Updates the observable funciton with a parent parent_obj."""
-        self.mode_names = list(set(parent_obj.mode_names) | set(parent_obj.dmode_names))
+        meta, meta2 = parent_obj.make_metas_child()
+        self.meta = meta
+        self.meta2 = meta2
         self.parent_obj = parent_obj
         return
 
@@ -62,7 +64,7 @@ class g1_perturb1(Gperturb1):
         return
 
     def _dm_dg(self, x):
-        out = self.parent_obj.dg_obj.dm_dg(x, self.names_tmp, 1)
+        out = self.parent_obj.dm_dg(x, self.meta2["modes_tmp"], 1)
         return out
 
 
@@ -76,5 +78,5 @@ class g2_perturb1(Gperturb1):
         return
 
     def _dm_dg(self, x):
-        out = self.parent_obj.dg_obj.dm_dg(x, self.names_tmp, 2)
+        out = self.parent_obj.dm_dg(x, self.meta2["modes_tmp"], 2)
         return out

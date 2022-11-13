@@ -50,6 +50,7 @@ class Observable(object):
         self._set_obs_func(self._base_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
         self._obs_grad_func = grad(self._obs_func)
+        self.parent_obj = None
         return
 
     def initialize_meta(self, **kwargs):
@@ -81,7 +82,7 @@ class Observable(object):
             "load the observed data"
         )
 
-    def _make_new(self, other):
+    def _make_obs_new(self, other):
         obs = Observable()
         obs.meta = self.meta
         for kk in other.keys():
@@ -93,32 +94,40 @@ class Observable(object):
         obs.meta2.update(other.meta2)
         return obs
 
+    def make_metas_child(self):
+        meta = self.meta.copy()
+        meta["modes"] = self.meta["modes_child"]
+        meta["modes_parent"] = self.meta["modes"]
+        meta["modes_child"] = []
+        meta2 = self.meta2
+        return meta, meta2
+
     def __add__(self, other):
-        obs = self._make_new(other)
+        obs = self._make_obs_new(other)
         func = lambda x: self._obs_func(x) + other._obs_func(x)
         obs._set_obs_func(func)
         return obs
 
     def __sub__(self, other):
-        obs = self._make_new(other)
+        obs = self._make_obs_new(other)
         func = lambda x: self._obs_func(x) - other._obs_func(x)
         obs._set_obs_func(func)
         return obs
 
     def __mul__(self, other):
-        obs = self._make_new(other)
+        obs = self._make_obs_new(other)
         func = lambda x: self._obs_func(x) * other._obs_func(x)
         obs._set_obs_func(func)
         return obs
 
     def __truediv__(self, other):
-        obs = self._make_new(other)
+        obs = self._make_obs_new(other)
         func = lambda x: self._obs_func(x) / other._obs_func(x)
         obs._set_obs_func(func)
         return obs
 
     def aind(self, colname):
-        return self.names_tmp.index(colname)
+        return self.meta2["modes_tmp"].index(colname)
 
     def test_catalog(self, cat):
         """Test whether the input catalog contains all the necessary
@@ -132,25 +141,25 @@ class Observable(object):
     def evaluate(self, cat):
         """Calls this observable function"""
         self.test_catalog(cat)
-        self.names_tmp = cat.mode_names
+        self.meta2["modes_tmp"] = cat.mode_names
         out = jnp.apply_along_axis(func1d=self._obs_func, axis=-1, arr=cat.data)
-        self.names_tmp = []
+        self.meta2["modes_tmp"] = []
         return out
 
     def grad(self, cat):
         """Calls the gradient vector function of observable function"""
         self.test_catalog(cat)
-        self.names_tmp = cat.mode_names
+        self.meta2["modes_tmp"] = cat.mode_names
         out = jnp.apply_along_axis(func1d=self._obs_grad_func, axis=-1, arr=cat.data)
-        self.names_tmp = []
+        self.meta2["modes_tmp"] = []
         return out
 
     def hessian(self, cat):
         """Calls the hessian matrix function of observable function"""
         self.test_catalog(cat)
-        self.names_tmp = cat.mode_names
+        self.meta2["modes_tmp"] = cat.mode_names
         out = jnp.apply_along_axis(func1d=self._obs_hessian_func, axis=-1, arr=cat.data)
-        self.names_tmp = []
+        self.meta2["modes_tmp"] = []
         return out
 
 
