@@ -21,50 +21,48 @@ class Gperturb1(Observable):
     """A Base Class to derive the first-order shear perturbation
     for an observable."""
 
-    def __init__(self, obs_obj):
-        """Initializes shear response object using a obs_obj object and
+    def __init__(self, parent_obj):
+        """Initializes shear response object using a parent_obj object and
         a noise covariance matrix
         """
         super(Gperturb1, self).__init__()
-        if not hasattr(obs_obj, "grad"):
+        if not hasattr(parent_obj, "grad"):
             raise ValueError("obs_fun does not has gradient")
-        if obs_obj.dg_obj is None:
-            raise ValueError("input obs_obj should have shear response")
-        self.update_obs(obs_obj)
+        if parent_obj.dg_obj is None:
+            raise ValueError("input parent_obj should have shear response")
+        self.update_parent(parent_obj)
         return
 
-    def update_obs(self, obs_obj):
-        """Updates the observable funciton."""
-        self.obs_obj = obs_obj
-        self.mode_names = obs_obj.mode_names
+    def update_parent(self, parent_obj):
+        """Updates the observable funciton with a parent parent_obj."""
+        self.mode_names = list(set(parent_obj.mode_names) | set(parent_obj.dmode_names))
+        self.parent_obj = parent_obj
         return
 
-    def _make_new(self):
-        obs = Observable()
-        obs.mode_names = list(set(self.obs_obj.mode_names)
-                | set(self.obs_obj.mode_names))
-        return obs
+    def _base_func(self, x):
+        """Returns the first-order shear response"""
+        res = jnp.dot(self.parent_obj._obs_grad_func(x), self._dm_dg(x))
+        return res
+
+    def _dm_dg(*args):
+        raise RuntimeError(
+            "Your observable code needs to over-ride the _dm_dg method "
+            "in the shear pserturbation class so it knows how to compute "
+            "shear responses of basis modes"
+        )
 
 
 class g1_perturb1(Gperturb1):
     """A Functional Class to derive the first-order shear perturbation
     for an observable function."""
 
-    def __init__(self, obs_obj):
-        """Initializes shear response object using an ObsObject
-        """
-        super(g1_perturb1, self).__init__(obs_obj)
+    def __init__(self, parent_obj):
+        """Initializes shear response object using an ObsObject"""
+        super(g1_perturb1, self).__init__(parent_obj)
         return
 
-    def _base_func(self, x):
-        """Returns the first-order shear response"""
-        res = jnp.dot(self.obs_obj._obs_grad_func(x), self._dm_dg(x))
-        return res
-
     def _dm_dg(self, x):
-        out = self.obs_obj.dg_obj.dm_dg(
-            x, self.mode_names, 1
-        )
+        out = self.parent_obj.dg_obj.dm_dg(x, self.names_tmp, 1)
         return out
 
 
@@ -72,19 +70,11 @@ class g2_perturb1(Gperturb1):
     """A Functional Class to derive the first-order shear perturbation for an
     observable function."""
 
-    def __init__(self, obs_obj):
-        """Initializes shear response object using an ObsObject
-        """
-        super(g2_perturb1, self).__init__(obs_obj)
+    def __init__(self, parent_obj):
+        """Initializes shear response object using an ObsObject"""
+        super(g2_perturb1, self).__init__(parent_obj)
         return
 
-    def _base_func(self, x):
-        """Returns the first-order shear response"""
-        res = jnp.dot(self.obs_obj._obs_grad_func(x), self._dm_dg(x))
-        return res
-
     def _dm_dg(self, x):
-        out = self.obs_obj.dg_obj.dm_dg(
-            x, self.mode_names, 2
-        )
+        out = self.parent_obj.dg_obj.dm_dg(x, self.names_tmp, 2)
         return out

@@ -59,6 +59,7 @@ class noise_perturb2(Observable):
                 self.obs_obj._obs_hessian_func(x),
                 self.noise_cov,
                 indexes,
-                ) / 2.0
+            )
+            / 2.0
         )
         return res

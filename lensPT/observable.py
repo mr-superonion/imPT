@@ -16,6 +16,7 @@
 # You can define your own observable function
 
 
+import fitsio
 import numpy as np
 import jax.numpy as jnp
 from jax import jacfwd, jacrev, grad
@@ -23,7 +24,8 @@ import numpy.lib.recfunctions as rfn
 
 MISSING = "if_you_see_this_there_was_a_mistake_creating_an_observable"
 
-def prepare_array(x, colnames):
+
+def prepare_array(x, colnames=None):
     """Prepare a unstructured array from structrued array [read by fitsio]
 
     Args:
@@ -40,15 +42,32 @@ def prepare_array(x, colnames):
         out = rfn.structured_to_unstructured(x[colnames], copy=False)
     return out
 
+
 class Observable(object):
     def __init__(self, **kwargs):
-        self.meta = {}
-        self.meta.update(**kwargs)
-        self.mode_names = [MISSING]
+        super(Observable, self).__init__()
+        self.initialize_meta(**kwargs)
         self._set_obs_func(self._base_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
         self._obs_grad_func = grad(self._obs_func)
-        self.dg_obj = None
+        return
+
+    def initialize_meta(self, **kwargs):
+        try:
+            self.meta
+        except AttributeError:
+            self.meta = {
+                "modes": [],  # current funciton modes
+                "modes_child": [],  # next-order funciton modes [dg]
+                "modes_parent": [],  # previous-order funciton modes [int g]
+                "modes_tmp": [],  # used to call a funciton
+            }
+        self.meta.update(**kwargs)
+        try:
+            self.meta2
+        except AttributeError:
+            self.meta2 = {}
+        self.meta2.update(**kwargs)
         return
 
     def _set_obs_func(self, func):
@@ -61,16 +80,16 @@ class Observable(object):
             "load the observed data"
         )
 
-    def prepare_array(self, x):
-        return prepare_array(x, self.mode_names)
-
-    def aind(self, colname):
-        return self.mode_names.index(colname)
-
     def _make_new(self, other):
         obs = Observable()
-        obs.meta = self.meta.update(other.meta)
-        obs.mode_names = list(set(self.mode_names) | set(other.mode_names))
+        obs.meta = self.meta
+        for kk in other.keys():
+            if kk in obs.meta.keys():
+                obs.meta[kk] = list(set(obs.meta[kk]) | set(other.meta[kk]))
+            else:
+                obs.meta[kk] = other.meta[kk]
+        obs.meta2 = self.meta2
+        obs.meta2.update(other.meta2)
         return obs
 
     def __add__(self, other):
@@ -97,17 +116,52 @@ class Observable(object):
         obs._set_obs_func(func)
         return obs
 
-    def evaluate(self, x):
+    def aind(self, colname):
+        return self.names_tmp.index(colname)
+
+    def test_catalog(self, cat):
+        """Test whether the input catalog contains all the necessary
+        information"""
+        if not set(self.meta["modes"]).issubset(set(cat.mode_names)):
+            raise ValueError(
+                "Input catalog does not have all the required\
+                    modes"
+            )
+
+    def evaluate(self, cat):
         """Calls this observable function"""
-        x = self.prepare_array(x)
-        return jnp.apply_along_axis(self._obs_func, axis=-1, arr=x)
+        self.test_catalog(cat)
+        self.names_tmp = cat.mode_names
+        out = jnp.apply_along_axis(func1d=self._obs_func, axis=-1, arr=cat.data)
+        self.names_tmp = []
+        return out
 
-    def grad(self, x):
+    def grad(self, cat):
         """Calls the gradient vector function of observable function"""
-        x = self.prepare_array(x)
-        return jnp.apply_along_axis(self._obs_grad_func, axis=-1, arr=x)
+        self.test_catalog(cat)
+        self.names_tmp = cat.mode_names
+        out = jnp.apply_along_axis(func1d=self._obs_grad_func, axis=-1, arr=cat.data)
+        self.names_tmp = []
+        return out
 
-    def hessian(self, x):
+    def hessian(self, cat):
         """Calls the hessian matrix function of observable function"""
-        x = self.prepare_array(x)
-        return jnp.apply_along_axis(self._obs_hessian_func, axis=-1, arr=x)
+        self.test_catalog(cat)
+        self.names_tmp = cat.mode_names
+        out = jnp.apply_along_axis(func1d=self._obs_hessian_func, axis=-1, arr=cat.data)
+        self.names_tmp = []
+        return out
+
+
+class Catalog(object):
+    def __init__(self, data_in, mode_names=None):
+        if isinstance(data_in, str):
+            data_in = fitsio.read(data_in)
+        if not isinstance(data_in, np.ndarray):
+            raise TypeError("Input data should be str or ndarray")
+        if mode_names is None:
+            self.mode_names = list(data_in.dtype.names)
+        else:
+            self.mode_names = mode_names
+        self.data = prepare_array(data_in, self.mode_names)
+        return
