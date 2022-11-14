@@ -31,7 +31,7 @@ colnames = [
     "fpfs_M42s",
 ]
 cat = lpt.Catalog(
-    "data/fpfs-cut32-0000-g1-0000.fits",
+    data="data/fpfs-cut32-0000-g1-0000.fits",
     mode_names=colnames,
 )
 

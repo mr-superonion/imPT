@@ -26,6 +26,7 @@ setup(
         "schwimmbad",
         "jax",
         "fpfs",
+        "fitsio",
     ],
     packages=find_packages(),
     # scripts=scripts,

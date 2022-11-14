@@ -22,6 +22,7 @@ import jax.numpy as jnp
 from jax import jacfwd, jacrev, grad
 import numpy.lib.recfunctions as rfn
 
+
 MISSING = "if_you_see_this_there_was_a_mistake_creating_an_observable"
 
 __all__ = ["Observable", "Catalog", "prepare_array"]
@@ -131,49 +132,68 @@ class Observable(object):
     def aind(self, colname):
         return self.meta2["modes_tmp"].index(colname)
 
-    def test_catalog(self, cat):
-        """Test whether the input catalog contains all the necessary
-        information"""
+    def _precompute(self, cat):
+        # Test whether the input catalog contains all the necessary
+        # information
         if not set(self.meta["modes"]).issubset(set(cat.mode_names)):
             raise ValueError(
                 "Input catalog does not have all the required\
                     modes"
             )
+        # update the modes_tmp
+        self.meta2["modes_tmp"] = cat.mode_names
+        return
+
+    def _postcompute(self):
+        # back to empty modes_tmp
+        self.meta2["modes_tmp"] = []
+        return
 
     def evaluate(self, cat):
         """Calls this observable function"""
-        self.test_catalog(cat)
-        self.meta2["modes_tmp"] = cat.mode_names
+        self._precompute(cat)
         out = jnp.apply_along_axis(func1d=self._obs_func, axis=-1, arr=cat.data)
-        self.meta2["modes_tmp"] = []
+        self._postcompute()
         return out
 
     def grad(self, cat):
         """Calls the gradient vector function of observable function"""
-        self.test_catalog(cat)
-        self.meta2["modes_tmp"] = cat.mode_names
+        self._precompute(cat)
         out = jnp.apply_along_axis(func1d=self._obs_grad_func, axis=-1, arr=cat.data)
-        self.meta2["modes_tmp"] = []
+        self._postcompute()
         return out
 
     def hessian(self, cat):
         """Calls the hessian matrix function of observable function"""
-        self.test_catalog(cat)
-        self.meta2["modes_tmp"] = cat.mode_names
+        self._precompute(cat)
         out = jnp.apply_along_axis(func1d=self._obs_hessian_func, axis=-1, arr=cat.data)
-        self.meta2["modes_tmp"] = []
+        self._postcompute()
         return out
 
 
 class Catalog(object):
-    def __init__(self, data_in, mode_names=None):
-        if isinstance(data_in, str):
-            data_in = fitsio.read(data_in)
-        if not isinstance(data_in, np.ndarray):
+    """A class for catalogs of measurements from images
+    """
+    def __init__(self, mode_names, data, noise_cov=None):
+        if isinstance(data, str):
+            data = fitsio.read(data)
+        if not isinstance(data, np.ndarray):
             raise TypeError("Input data should be str or ndarray")
-        if mode_names is None:
-            self.mode_names = list(data_in.dtype.names)
+        self.mode_names = mode_names
+        self.data = prepare_array(data, self.mode_names)
+
+        if noise_cov is not None:
+            if isinstance(noise_cov, str):
+                noise_cov = jnp.array(fitsio.read(noise_cov))
+            if not isinstance(noise_cov, jnp.ndarray):
+                raise TypeError(
+                    "Input noise covariance should be str or np.ndarray"
+                    )
+            ncol = len(mode_names)
+            if not noise_cov.shape == (ncol, ncol):
+                raise ValueError("input noise cov has an inconsistent shape")
+            self.noise_cov = noise_cov
         else:
-            self.mode_names = mode_names
-        self.data = prepare_array(data_in, self.mode_names)
+            self.noise_cov = None
         return
+

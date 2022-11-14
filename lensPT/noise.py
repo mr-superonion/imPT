@@ -23,35 +23,44 @@ class noisePerturb2(Observable):
     """A Functional Class to derive the second-order noise perturbation
     function."""
 
-    def __init__(self, obs_obj, noise_cov):
+    def __init__(self, obs_obj):
         """Initializes noise bias function object using a obs_obj object and
         a noise covariance matrix
         """
         super(noisePerturb2, self).__init__()
         if not hasattr(obs_obj, "hessian"):
             raise ValueError("obs_fun does not has hessian")
-        self.update_obs(obs_obj)
-        self.update_noise_cov(noise_cov)
+        self.initialize_with_obs(obs_obj)
+        self.noise_cov = None
         return
 
-    def update_noise_cov(self, noise_cov):
-        """Updates the noise covariance"""
-        self.noise_cov = noise_cov
-        return
-
-    def update_obs(self, obs_obj):
+    def initialize_with_obs(self, obs_obj):
         """Updates the observable funciton and the noise covariance"""
+        self.meta = obs_obj.meta
+        self.meta2 = obs_obj.meta2
         self.obs_obj = obs_obj
-        self.mode_names = obs_obj.mode_names
         return
 
-    def check_vector(self, x):
-        """checks whether a data vector meets the requirements"""
-        ndata = x.shape[-1]
-        if self.noise_cov.shape != (ndata, ndata):
+    def _precompute(self, cat):
+        # Test whether the input catalog contains all the necessary
+        # information
+        if not set(self.meta["modes"]).issubset(set(cat.mode_names)):
             raise ValueError(
-                "input data should have length %d" % self.noise_cov.shape[0]
+                "Input catalog does not have all the required\
+                    modes"
             )
+        # update the modes_tmp
+        self.meta2["modes_tmp"] = cat.mode_names
+        if cat.noise_cov is None:
+            raise AttributeError("Input catalog does not have noise_cov")
+        self.noise_cov = cat.noise_cov
+        return
+
+    def _postcompute(self):
+        # back to empty modes_tmp
+        self.meta2["modes_tmp"] = []
+        self.noise_cov = None
+        return
 
     def _base_func(self, x):
         """Returns the second-order noise response"""
