@@ -17,7 +17,7 @@ import lensPT as lpt
 
 
 ndata = 30
-data = fitsio.read("./fpfs-cut32-0000-g1-0000.fits")
+data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
 colnames = [
     "fpfs_M00",
     "fpfs_M20",

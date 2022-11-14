@@ -18,7 +18,7 @@ import lensPT as lpt
 
 
 Const = 2.0
-data = fitsio.read("./fpfs-cut32-0000-g1-0000.fits")
+data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
 ndata = len(data)
 ell_fpfs = fpfs.catalog.fpfsM2E(data, const=Const, noirev=False)
 colnames = [
@@ -31,9 +31,9 @@ colnames = [
     "fpfs_M42s",
 ]
 cat = lpt.observable.Catalog(
-        "./fpfs-cut32-0000-g1-0000.fits",
-        mode_names=colnames,
-        )
+    "data/fpfs-cut32-0000-g1-0000.fits",
+    mode_names=colnames,
+)
 
 
 def test_e1():
@@ -41,11 +41,11 @@ def test_e1():
     ell1 = lpt.fpfs.weighted_e1(Const=Const)
     np.testing.assert_array_almost_equal(ell1.evaluate(cat), ell_fpfs["fpfs_e1"])
     print("testing shear response of FPFS's e1")
-    de1_dg=lpt.shear.g1_perturb1(ell1)
+    de1_dg = lpt.shear.g1_perturb1(ell1)
     np.testing.assert_array_almost_equal(
-            de1_dg.evaluate(cat),
-            ell_fpfs['fpfs_R1E'],
-            )
+        de1_dg.evaluate(cat),
+        ell_fpfs["fpfs_R1E"],
+    )
     return
 
 
@@ -54,11 +54,11 @@ def test_e2():
     ell2 = lpt.fpfs.weighted_e2(Const=Const)
     np.testing.assert_array_almost_equal(ell2.evaluate(cat), ell_fpfs["fpfs_e2"])
     print("testing shear response of FPFS's e2")
-    de2_dg=lpt.shear.g2_perturb1(ell2)
+    de2_dg = lpt.shear.g2_perturb1(ell2)
     np.testing.assert_array_almost_equal(
-            de2_dg.evaluate(cat),
-            ell_fpfs['fpfs_R2E'],
-            )
+        de2_dg.evaluate(cat),
+        ell_fpfs["fpfs_R2E"],
+    )
     return
 
 

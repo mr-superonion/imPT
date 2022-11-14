@@ -17,7 +17,7 @@ import lensPT as lpt
 
 def test_catalog():
     print("testing for catalog initialization")
-    data = fitsio.read("./fpfs-cut32-0000-g1-0000.fits")
+    data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
     colnames = [
         "fpfs_M00",
         "fpfs_M20",
@@ -29,8 +29,8 @@ def test_catalog():
     ]
     lpt.observable.Catalog(data, mode_names=colnames)
     lpt.observable.Catalog(data)
-    lpt.observable.Catalog("./fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
-    cat = lpt.observable.Catalog("./fpfs-cut32-0000-g1-0000.fits")
+    lpt.observable.Catalog("data/fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
+    cat = lpt.observable.Catalog("data/fpfs-cut32-0000-g1-0000.fits")
     cat.mode_names
     cat.data
     return
