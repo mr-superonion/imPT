@@ -74,15 +74,18 @@ class shapelets_shear(object):
         elif basis_name == "fpfs_M20":
             out = -jnp.sqrt(6.0) * x[self.aind("fpfs_M42c")]
         elif basis_name == "fpfs_M22c":
-            out = (x[self.aind("fpfs_M00")] - x[self.aind("fpfs_M40")]) / jnp.sqrt(2.0)
+            out = (
+                    x[self.aind("fpfs_M00")]
+                    - x[self.aind("fpfs_M40")]
+                ) / jnp.sqrt(2.0)
         elif basis_name == "fpfs_M22s":
-            # NOTE: Neglect spin-4 term
+            # TODO: Neglect spin-4 term. Need to add it when we have M44
             out = 0.0
         elif basis_name == "fpfs_M40":
             # NOTE: Incldue the shear response of M40 in the future. This is not
             # required in the FPFS shear estimation (v1~v3), so I set it to zero
             # here (But if you are interested in playing with shear response of
-            # this term, please contact XL.)
+            # this term, please contact me.)
             out = 0.0
         else:
             out = 0.0
@@ -94,15 +97,18 @@ class shapelets_shear(object):
         elif basis_name == "fpfs_M20":
             out = -jnp.sqrt(6.0) * x[self.aind("fpfs_M42s")]
         elif basis_name == "fpfs_M22c":
-            # NOTE: Neglect spin-4 term
+            # TODO: Neglect spin-4 term. Need to add it when we have M44
             out = 0.0
         elif basis_name == "fpfs_M22s":
-            out = (x[self.aind("fpfs_M00")] - x[self.aind("fpfs_M40")]) / jnp.sqrt(2.0)
+            out = (
+                    x[self.aind("fpfs_M00")] -
+                    x[self.aind("fpfs_M40")]
+                ) / jnp.sqrt(2.0)
         elif basis_name == "fpfs_M40":
             # NOTE: Incldue the shear response of M40 in the future. This is not
             # required in the FPFS shear estimation (v1~v3), so I set it to zero
             # here (But if you are interested in playing with shear response of
-            # this term, please contact XL.)
+            # this term, please contact me.)
             out = 0.0
         else:
             out = 0.0
