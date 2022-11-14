@@ -17,7 +17,7 @@ with open(fname, "r") as ff:
 setup(
     name="lensPT",
     version=__version__,
-    description="Estimator of Lensing Perturbations",
+    description="Auto-diff Estimator of Lensing Perturbations",
     author="Xiangchong Li",
     author_email="mr.superonion@hotmail.com",
     python_requires=">=3.9",

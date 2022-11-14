@@ -1,6 +1,7 @@
 # lensPT
 
-Fast estimator for Lensing Perturbation (lensPT) from astronomical images
+Fast estimator for Lensing Perturbation (`lensPT`) from astronomical images
+using the auto differentiating function of jax.
 
 A simple code to compute the response to lensing perturbations and remove the
 bias due to the perturbation from image noise.
@@ -13,3 +14,7 @@ For developers:
 git clone https://github.com/mr-superonion/lensPT.git
 pip install -e . --user
 ```
+
+## Summary
+For the first version of `lensPT`, we implement `FPFS` and use `lensPT` to auto
+differentiate `FPFS`.
