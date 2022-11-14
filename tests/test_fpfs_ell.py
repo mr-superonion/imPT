@@ -17,10 +17,6 @@ import numpy as np
 import lensPT as lpt
 
 
-Const = 2.0
-data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
-ndata = len(data)
-ell_fpfs = fpfs.catalog.fpfsM2E(data, const=Const, noirev=False)
 colnames = [
     "fpfs_M00",
     "fpfs_M20",
@@ -30,9 +26,20 @@ colnames = [
     "fpfs_M42c",
     "fpfs_M42s",
 ]
+Const = 2.0
+data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
+ndata = len(data)
+cov_data=lpt.fpfsCov2lptCov(data, colnames)
+
+ell_fpfs = fpfs.catalog.fpfsM2E(data, const=Const, noirev=False)
+ell_fpfs_corr = fpfs.catalog.fpfsM2E(data, const=Const, noirev=True)
+noicorr_fpfs_e1 = ell_fpfs["fpfs_e1"] - ell_fpfs_corr["fpfs_e1"]
+noicorr_fpfs_e2 = ell_fpfs["fpfs_e2"] - ell_fpfs_corr["fpfs_e2"]
+
 cat = lpt.Catalog(
     data="data/fpfs-cut32-0000-g1-0000.fits",
     mode_names=colnames,
+    noise_cov=cov_data,
 )
 
 
@@ -46,6 +53,9 @@ def test_e1():
         de1_dg.evaluate(cat),
         ell_fpfs["fpfs_R1E"],
     )
+    print("testing noise response of FPFS's e1")
+    noiseE1=lpt.noisePerturb2(ell1)
+    np.testing.assert_array_almost_equal(noiseE1.evaluate(cat), noicorr_fpfs_e1)
     return
 
 
@@ -59,6 +69,9 @@ def test_e2():
         de2_dg.evaluate(cat),
         ell_fpfs["fpfs_R2E"],
     )
+    print("testing noise response of FPFS's e2")
+    noiseE2=lpt.noisePerturb2(ell2)
+    np.testing.assert_array_almost_equal(noiseE2.evaluate(cat), noicorr_fpfs_e2)
     return
 
 
