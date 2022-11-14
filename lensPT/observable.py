@@ -24,6 +24,8 @@ import numpy.lib.recfunctions as rfn
 
 MISSING = "if_you_see_this_there_was_a_mistake_creating_an_observable"
 
+__all__ = ["Observable", "Catalog", "prepare_array"]
+
 
 def prepare_array(x, colnames=None):
     """Prepare a unstructured array from structrued array [read by fitsio]

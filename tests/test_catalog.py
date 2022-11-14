@@ -27,10 +27,10 @@ def test_catalog():
         "fpfs_M42c",
         "fpfs_M42s",
     ]
-    lpt.observable.Catalog(data, mode_names=colnames)
-    lpt.observable.Catalog(data)
-    lpt.observable.Catalog("data/fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
-    cat = lpt.observable.Catalog("data/fpfs-cut32-0000-g1-0000.fits")
+    lpt.Catalog(data, mode_names=colnames)
+    lpt.Catalog(data)
+    lpt.Catalog("data/fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
+    cat = lpt.Catalog("data/fpfs-cut32-0000-g1-0000.fits")
     cat.mode_names
     cat.data
     return

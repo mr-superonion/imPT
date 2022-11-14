@@ -16,8 +16,10 @@
 import jax.numpy as jnp
 from .observable import Observable
 
+__all__ = ["noisePerturb2"]
 
-class noise_perturb2(Observable):
+
+class noisePerturb2(Observable):
     """A Functional Class to derive the second-order noise perturbation
     function."""
 
@@ -25,7 +27,7 @@ class noise_perturb2(Observable):
         """Initializes noise bias function object using a obs_obj object and
         a noise covariance matrix
         """
-        super(noise_perturb2, self).__init__()
+        super(noisePerturb2, self).__init__()
         if not hasattr(obs_obj, "hessian"):
             raise ValueError("obs_fun does not has hessian")
         self.update_obs(obs_obj)

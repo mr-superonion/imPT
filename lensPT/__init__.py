@@ -1,9 +1,14 @@
 # lensPT autodiff pipline
 # flake8: noqa
 from .__version__ import __version__
-from . import noise
-from . import shear
-from . import observable
+from .observable import *
+from .distortion import *
+from .noise import *
 from . import fpfs
 
-__all__ = ["noise", "shear", "observable", "fpfs"]
+__all__ = []
+__all__ += observable.__all__
+__all__ += distortion.__all__
+__all__ += noise.__all__
+
+__all__ += ["fpfs"]
