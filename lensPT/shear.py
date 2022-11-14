@@ -19,7 +19,9 @@ from .observable import Observable
 
 class Gperturb1(Observable):
     """A Base Class to derive the first-order shear perturbation
-    for an observable."""
+    for an observable. The perturbation follows eq. (4) of
+    https://arxiv.org/abs/2208.10522
+    """
 
     def __init__(self, parent_obj):
         """Initializes shear response object using a parent_obj object and
@@ -55,8 +57,9 @@ class Gperturb1(Observable):
 
 
 class g1_perturb1(Gperturb1):
-    """A Functional Class to derive the first-order shear perturbation
-    for an observable function."""
+    """A Functional Class to derive the first-order shear [the first component]
+    perturbation for an observable function.
+    """
 
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject"""
@@ -69,8 +72,9 @@ class g1_perturb1(Gperturb1):
 
 
 class g2_perturb1(Gperturb1):
-    """A Functional Class to derive the first-order shear perturbation for an
-    observable function."""
+    """A Functional Class to derive the first-order shear [the second
+    component] perturbation for an observable function.
+    """
 
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject"""

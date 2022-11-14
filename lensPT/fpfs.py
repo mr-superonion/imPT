@@ -45,6 +45,13 @@ def tsfunc2(x, mu=0.0, sigma=1.5):
 
 
 class shapelets_shear(object):
+    """A class for shear response of polar shapelet modes introduced in
+    https://arxiv.org/abs/astro-ph/0408445
+
+    In the other class of this pipeline, we will follow
+    https://arxiv.org/abs/1805.08514
+    to use shaplet modes to construct shear estimator
+    """
     def __init__(self, **kwargs):
         super(shapelets_shear, self).__init__()
         self.initialize_meta(**kwargs)
@@ -145,7 +152,17 @@ class shapelets_shear(object):
 
 
 class weighted_e1(Observable, shapelets_shear):
+    """A class for FPFS ellipticity [the first component] introduced by
+    https://arxiv.org/abs/1805.08514
+    We take the form of eq. (36) in
+    https://arxiv.org/abs/2208.10522
+    """
     def __init__(self, Const):
+        """Initializer of weighted e1
+
+        Args:
+            Const (float):  FPFS weighting parameter
+        """
         super(weighted_e1, self).__init__(Const=Const)
         self.umode_names = None
         self.meta["modes"] = [
@@ -170,7 +187,17 @@ class weighted_e1(Observable, shapelets_shear):
 
 
 class weighted_e2(Observable, shapelets_shear):
+    """A class for FPFS ellipticity [the first component] introduced by
+    https://arxiv.org/abs/1805.08514
+    We take the form of eq. (36) in
+    https://arxiv.org/abs/2208.10522
+    """
     def __init__(self, Const):
+        """Initializer of weighted e1
+
+        Args:
+            Const (float):  FPFS weighting parameter
+        """
         super(weighted_e2, self).__init__(Const=Const)
         self.umode_names = None
         self.meta["modes"] = [
