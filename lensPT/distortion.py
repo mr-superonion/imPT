@@ -16,7 +16,7 @@
 import jax.numpy as jnp
 from .observable import Observable
 
-__all__ = ["g1Perturb1", "g2Perturb1"]
+__all__ = ["G1Perturb1", "G2Perturb1"]
 
 
 class Gperturb1(Observable):
@@ -58,14 +58,14 @@ class Gperturb1(Observable):
         )
 
 
-class g1Perturb1(Gperturb1):
+class G1Perturb1(Gperturb1):
     """A Functional Class to derive the first-order shear [the first component]
     perturbation for an observable function.
     """
 
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject."""
-        super(g1Perturb1, self).__init__(parent_obj)
+        super(G1Perturb1, self).__init__(parent_obj)
         return
 
     def _dm_dg(self, x):
@@ -73,14 +73,14 @@ class g1Perturb1(Gperturb1):
         return out
 
 
-class g2Perturb1(Gperturb1):
+class G2Perturb1(Gperturb1):
     """A Functional Class to derive the first-order shear [the second
     component] perturbation for an observable function.
     """
 
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject."""
-        super(g2Perturb1, self).__init__(parent_obj)
+        super(G2Perturb1, self).__init__(parent_obj)
         return
 
     def _dm_dg(self, x):

@@ -172,8 +172,8 @@ class Observable(object):
 
 
 class Catalog(object):
-    """A class for catalogs of measurements from images
-    """
+    """A class for catalogs of measurements from images"""
+
     def __init__(self, mode_names, data, noise_cov=None):
         if isinstance(data, str):
             data = fitsio.read(data)
@@ -186,9 +186,7 @@ class Catalog(object):
             if isinstance(noise_cov, str):
                 noise_cov = jnp.array(fitsio.read(noise_cov))
             if not isinstance(noise_cov, jnp.ndarray):
-                raise TypeError(
-                    "Input noise covariance should be str or np.ndarray"
-                    )
+                raise TypeError("Input noise covariance should be str or np.ndarray")
             ncol = len(mode_names)
             if not noise_cov.shape == (ncol, ncol):
                 raise ValueError("input noise cov has an inconsistent shape")
@@ -196,4 +194,3 @@ class Catalog(object):
         else:
             self.noise_cov = None
         return
-

@@ -44,7 +44,7 @@ def tsfunc2(x, mu=0.0, sigma=1.5):
     return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
 
 
-class shapeletPerturb(Observable):
+class ShapeletPerturb(Observable):
     """A class for perturbation response of polar shapelet modes introduced in
     https://arxiv.org/abs/astro-ph/0408445
     [see eq. (37) to eq. (42)]
@@ -53,8 +53,9 @@ class shapeletPerturb(Observable):
     https://arxiv.org/abs/1805.08514
     to use shaplet modes to construct shear estimator
     """
+
     def __init__(self, **kwargs):
-        super(shapeletPerturb, self).__init__(**kwargs)
+        super(ShapeletPerturb, self).__init__(**kwargs)
         return
 
     def _dm_dg1(self, x, basis_name):
@@ -133,19 +134,20 @@ class shapeletPerturb(Observable):
         return out
 
 
-class weightedE1(shapeletPerturb):
+class WeightedE1(ShapeletPerturb):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
     https://arxiv.org/abs/2208.10522
     """
-    def __init__(self, Const):
+
+    def __init__(self, wconst):
         """Initializer of weighted e1
 
         Args:
-            Const (float):  FPFS weighting parameter
+            wconst (float):  FPFS weighting parameter
         """
-        super(weightedE1, self).__init__(Const=Const)
+        super(WeightedE1, self).__init__(wconst=wconst)
         self.umode_names = None
         self.meta["modes"] = [
             "fpfs_M22c",
@@ -163,24 +165,25 @@ class weightedE1(shapeletPerturb):
 
     def _base_func(self, x):
         out = x[self.aind("fpfs_M22c")] / (
-            x[self.aind("fpfs_M00")] + self.meta["Const"]
+            x[self.aind("fpfs_M00")] + self.meta["wconst"]
         )
         return out
 
 
-class weightedE2(shapeletPerturb):
+class WeightedE2(ShapeletPerturb):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
     https://arxiv.org/abs/2208.10522
     """
-    def __init__(self, Const):
+
+    def __init__(self, wconst):
         """Initializer of weighted e1
 
         Args:
-            Const (float):  FPFS weighting parameter
+            wconst (float):  FPFS weighting parameter
         """
-        super(weightedE2, self).__init__(Const=Const)
+        super(WeightedE2, self).__init__(wconst=wconst)
         self.umode_names = None
         self.meta["modes"] = [
             "fpfs_M22s",
@@ -198,12 +201,12 @@ class weightedE2(shapeletPerturb):
 
     def _base_func(self, x):
         out = x[self.aind("fpfs_M22s")] / (
-            x[self.aind("fpfs_M00")] + self.meta["Const"]
+            x[self.aind("fpfs_M00")] + self.meta["wconst"]
         )
         return out
 
 
-# class peak_weight(shapeletPerturb):
+# class peak_weight(ShapeletPerturb):
 #     def __init__(self, **kwargs):
 #         super(peak_weight, self).__init__()
 #         self.mode_names = [

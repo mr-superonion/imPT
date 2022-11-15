@@ -30,13 +30,13 @@ colnames = [
     "fpfs_M42c",
     "fpfs_M42s",
 ]
-Const = 2.0
+wconst = 2.0
 data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
 ndata = len(data)
 cov_data=lpt.fpfsCov2lptCov(data, colnames)
 
-ell_fpfs = fpfs.catalog.fpfsM2E(data, const=Const, noirev=False)
-ell_fpfs_corr = fpfs.catalog.fpfsM2E(data, const=Const, noirev=True)
+ell_fpfs = fpfs.catalog.fpfsM2E(data, const=wconst, noirev=False)
+ell_fpfs_corr = fpfs.catalog.fpfsM2E(data, const=wconst, noirev=True)
 noicorr_fpfs_e1 = ell_fpfs["fpfs_e1"] - ell_fpfs_corr["fpfs_e1"]
 noicorr_fpfs_e2 = ell_fpfs["fpfs_e2"] - ell_fpfs_corr["fpfs_e2"]
 
@@ -49,19 +49,19 @@ cat = lpt.Catalog(
 
 def test_e1():
     print("testing measurement for FPFS's e1")
-    ell1 = lpt.fpfs.weightedE1(Const=Const)
+    ell1 = lpt.fpfs.WeightedE1(wconst=wconst)
     np.testing.assert_array_almost_equal(ell1.evaluate(cat), ell_fpfs["fpfs_e1"])
     print("testing shear response of FPFS's e1")
-    de1_dg = lpt.g1Perturb1(ell1)
+    de1_dg = lpt.G1Perturb1(ell1)
     np.testing.assert_array_almost_equal(
         de1_dg.evaluate(cat),
         ell_fpfs["fpfs_R1E"],
     )
     print("testing noise response of FPFS's e1")
-    noiseE1=lpt.noisePerturb2(ell1)
+    noiseE1=lpt.NoisePerturb2(ell1)
     np.testing.assert_array_almost_equal(noiseE1.evaluate(cat), noicorr_fpfs_e1)
     print("testing noise response of FPFS's Re1")
-    noiseR1=lpt.noisePerturb2(de1_dg)
+    noiseR1=lpt.NoisePerturb2(de1_dg)
     np.testing.assert_array_almost_equal(
             noiseR1.evaluate(cat),
             ell_fpfs['fpfs_R1E'] - ell_fpfs_corr['fpfs_R1E'],
@@ -71,19 +71,19 @@ def test_e1():
 
 def test_e2():
     print("testing measurement for FPFS's e2")
-    ell2 = lpt.fpfs.weightedE2(Const=Const)
+    ell2 = lpt.fpfs.WeightedE2(wconst=wconst)
     np.testing.assert_array_almost_equal(ell2.evaluate(cat), ell_fpfs["fpfs_e2"])
     print("testing shear response of FPFS's e2")
-    de2_dg = lpt.g2Perturb1(ell2)
+    de2_dg = lpt.G2Perturb1(ell2)
     np.testing.assert_array_almost_equal(
         de2_dg.evaluate(cat),
         ell_fpfs["fpfs_R2E"],
     )
     print("testing noise response of FPFS's e2")
-    noiseE2=lpt.noisePerturb2(ell2)
+    noiseE2=lpt.NoisePerturb2(ell2)
     np.testing.assert_array_almost_equal(noiseE2.evaluate(cat), noicorr_fpfs_e2)
     print("testing noise response of FPFS's Re2")
-    noiseR2=lpt.noisePerturb2(de2_dg)
+    noiseR2=lpt.NoisePerturb2(de2_dg)
     np.testing.assert_array_almost_equal(
             noiseR2.evaluate(cat),
             ell_fpfs['fpfs_R2E'] - ell_fpfs_corr['fpfs_R2E'],

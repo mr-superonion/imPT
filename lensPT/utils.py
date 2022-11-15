@@ -20,6 +20,7 @@ import jax.numpy as jnp
 
 __all__ = ["fpfsCov2lptCov"]
 
+
 def fpfsCov2lptCov(data, mnames):
     """Converts FPFS noise Covariance elements into a covariance matrix of
     lensPT.
@@ -30,19 +31,19 @@ def fpfsCov2lptCov(data, mnames):
     Returns:
         out (ndarray):      Covariance matrix
     """
-    ll=['N'+nn[6:] for nn in mnames]
-    nmodes=len(mnames)
+    ll = ["N" + nn[6:] for nn in mnames]
+    nmodes = len(mnames)
     out = np.zeros((nmodes, nmodes))
     for i in range(nmodes):
         for j in range(nmodes):
             try:
                 try:
-                    cname = "fpfs_%s%s" %(ll[i],ll[j])
-                    out[i,j]= data[cname][0]
+                    cname = "fpfs_%s%s" % (ll[i], ll[j])
+                    out[i, j] = data[cname][0]
                 except ValueError:
-                    cname = "fpfs_%s%s" %(ll[j],ll[i])
-                    out[i,j] = data[cname][0]
+                    cname = "fpfs_%s%s" % (ll[j], ll[i])
+                    out[i, j] = data[cname][0]
             except ValueError:
-                out[i,j] = 0.
+                out[i, j] = 0.0
     out = jnp.array(out)
     return out
