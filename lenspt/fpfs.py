@@ -112,6 +112,10 @@ class ShapeletPerturb(Observable):
         out = jnp.array([_func_(x=data, basis_name=nm) for nm in name_list]).T
         return out
 
+    def make_child_dmdg(self):
+        # TODO: This need to be improved
+        return self.dm_dg
+
 
 class WeightedE1(ShapeletPerturb):
     """A class for FPFS ellipticity [the first component] introduced by
