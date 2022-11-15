@@ -43,6 +43,7 @@ def prepare_array(x, colnames=None):
         out = x
     else:
         out = rfn.structured_to_unstructured(x[colnames], copy=False)
+        out = jnp.array(out, dtype=jnp.float64)
     return out
 
 

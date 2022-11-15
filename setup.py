@@ -10,9 +10,9 @@ with open(fname, "r") as ff:
     exec(ff.read())
 
 
-# scripts = [
-#     'bin/a.py',
-# ]
+scripts = [
+    "bin/lenspt_config",
+]
 
 setup(
     name="lenspt",
@@ -29,7 +29,7 @@ setup(
         "fitsio",
     ],
     packages=find_packages(),
-    # scripts=scripts,
+    scripts=scripts,
     include_package_data=True,
     zip_safe=False,
     url="https://github.com/mr-superonion/lensPT/",

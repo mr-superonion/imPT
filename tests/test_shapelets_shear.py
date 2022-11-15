@@ -53,20 +53,15 @@ def test_g1():
     )
     np.testing.assert_array_almost_equal(
         res_00, out[:, colnames.index("fpfs_M00")],
-        decimal=5,
     )
     np.testing.assert_array_almost_equal(
         res_20, out[:, colnames.index("fpfs_M20")],
-        decimal=5,
     )
     np.testing.assert_array_almost_equal(
         res_22c, out[:, colnames.index("fpfs_M22c")],
-        decimal=5,
     )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata), out[:, colnames.index("fpfs_M22s")],
-        decimal=5,
-
     )
     return
 
@@ -88,19 +83,15 @@ def test_g2():
     )
     np.testing.assert_array_almost_equal(
         res_00, out[:, colnames.index("fpfs_M00")],
-        decimal=5,
         )
     np.testing.assert_array_almost_equal(
         res_20, out[:, colnames.index("fpfs_M20")],
-        decimal=5,
         )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata), out[:, colnames.index("fpfs_M22c")],
-        decimal=5,
         )
     np.testing.assert_array_almost_equal(res_22s,
         out[:, colnames.index("fpfs_M22s")],
-        decimal=5,
         )
     return
 

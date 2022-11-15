@@ -14,6 +14,11 @@ For developers:
 git clone https://github.com/mr-superonion/lensPT.git
 pip install -e . --user
 ```
+before running code, users need to setup the environment by
+```shell
+source lenspt_config
+```
+or users can put the configure command into _dot_shrc file.
 
 ## Summary
 For the first version of `lensPT`, we implement `FPFS` and use `lensPT` to auto
