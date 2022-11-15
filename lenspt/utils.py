@@ -47,3 +47,23 @@ def fpfsCov2lptCov(data, mnames):
                 out[i, j] = 0.0
     out = jnp.array(out)
     return out
+
+
+def tsfunc2(x, mu=0.0, sigma=1.5):
+    """Returns the weight funciton.
+    This is for C2 sinusoidal based funciton
+
+    Args:
+        x (ndarray):    input data vector
+        mu (float):     center of the cut
+        sigma (float):  width of the selection function
+    Returns:
+        out (ndarray):  the weight funciton
+    """
+    t = (x - mu) / sigma
+
+    def func(t):
+        return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
+
+    return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
+

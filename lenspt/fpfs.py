@@ -19,29 +19,8 @@
 
 import jax.numpy as jnp
 from .observable import Observable
-
-
-def tsfunc2(x, mu=0.0, sigma=1.5):
-    """Returns the weight funciton [deriv=0], or the *multiplicative factor* to
-    the weight function for first order derivative [deriv=1]. This is for C2
-    funciton
-
-    Args:
-        deriv (int):    whether do derivative [deriv=1] or not [deriv=0]
-        x (ndarray):    input data vector
-        mu (float):     center of the cut
-        sigma (float):  width of the selection function
-    Returns:
-        out (ndarray):  the weight funciton [deriv=0], or the *multiplicative
-                        factor* to the weight function for first order
-                        derivative [deriv=1]
-    """
-    t = (x - mu) / sigma
-
-    def func(t):
-        return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
-
-    return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
+from .utils import *
+from .utils import tsfunc2
 
 
 class ShapeletPerturb(Observable):
@@ -142,7 +121,7 @@ class WeightedE1(ShapeletPerturb):
     """
 
     def __init__(self, wconst):
-        """Initializer of weighted e1
+        """Initializer of FPFS weighted e1
 
         Args:
             wconst (float):  FPFS weighting parameter
@@ -153,7 +132,6 @@ class WeightedE1(ShapeletPerturb):
             "fpfs_M22c",
             "fpfs_M00",
         ]
-        self.nmodes = len(self.meta["modes"])
         # NOTE: XL: I manually put dmode_names, which I know is not clever;
         # Will make a dictionary for that
         self.meta["modes_child"] = [
@@ -171,25 +149,23 @@ class WeightedE1(ShapeletPerturb):
 
 
 class WeightedE2(ShapeletPerturb):
-    """A class for FPFS ellipticity [the first component] introduced by
+    """A class for FPFS ellipticity [the second component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
     https://arxiv.org/abs/2208.10522
     """
 
     def __init__(self, wconst):
-        """Initializer of weighted e1
+        """Initializer of FPFS weighted e1
 
         Args:
             wconst (float):  FPFS weighting parameter
         """
         super(WeightedE2, self).__init__(wconst=wconst)
-        self.umode_names = None
         self.meta["modes"] = [
             "fpfs_M22s",
             "fpfs_M00",
         ]
-        self.nmodes = len(self.meta["modes"])
         # NOTE: XL: I manually put dmode_names, which I know is not clever;
         # Will make a dictionary for that
         self.meta["modes_child"] = [
@@ -205,21 +181,53 @@ class WeightedE2(ShapeletPerturb):
         )
         return out
 
+class SelectWeight(ShapeletPerturb):
+    """A class for FPFS selection weight introduced by
+    https://arxiv.org/abs/2208.10522
+    """
 
-# class peak_weight(ShapeletPerturb):
+    def __init__(self, mu0, sigma0, mu2, sigma2):
+        """Initializer of FPFS selection weight [flux=0, size=2]
+
+        Args:
+            mu (float):     Center of the cut
+            sigma (float):  Smoothness parameter of the cut
+        """
+        super(SelectWeight, self).__init__(
+                mu0=mu0, sigma0=sigma0,
+                mu2=mu2, sigma2=sigma2,
+                )
+        self.meta["modes"] = [
+            "fpfs_M00",
+            "fpfs_M20",
+        ]
+        # NOTE: XL: I manually put dmode_names, which I know is not clever;
+        # Will make a dictionary for that
+        self.meta["modes_child"] = [
+            "fpfs_M22c",
+            "fpfs_M22s",
+            "fpfs_M42c",
+            "fpfs_M42s",
+        ]
+        return
+
+    def _base_func(self, x):
+        w0 = tsfunc2(
+                x[self.aind("fpfs_M00")],
+                mu = self.meta["mu0"],
+                sigma = self.meta["sigma0"],
+                )
+        w2 = tsfunc2(
+                x[self.aind("fpfs_M20")],
+                mu = self.meta["mu2"],
+                sigma = self.meta["sigma2"],
+                )
+        return w0*w2
+
+
+# class PeakWeight(ShapeletPerturb):
 #     def __init__(self, **kwargs):
 #         super(peak_weight, self).__init__()
-#         self.mode_names = [
-#             "fpfs_M00",
-#             "fpfs_M40",
-#             "fpfs_M22s",
-#         ]
-#         for _ in range(8):
-#             self.mode_names.append("fpfs_v%d" %_)
-#             self.mode_names.append("fpfs_v%dr1" %_)
-#             self.mode_names.append("fpfs_v%dr2" %_)
-#         self.nmodes = len(self.mode_names)
-#         self.has_dg = True
 #         return
 
 #     def _base_func(self, x):
