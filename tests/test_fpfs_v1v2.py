@@ -49,7 +49,7 @@ cat = lpt.Catalog(
 
 def test_e1():
     print("testing measurement for FPFS's e1")
-    ell1 = lpt.fpfs.weighted_e1(Const=Const)
+    ell1 = lpt.fpfs.weightedE1(Const=Const)
     np.testing.assert_array_almost_equal(ell1.evaluate(cat), ell_fpfs["fpfs_e1"])
     print("testing shear response of FPFS's e1")
     de1_dg = lpt.g1Perturb1(ell1)
@@ -71,7 +71,7 @@ def test_e1():
 
 def test_e2():
     print("testing measurement for FPFS's e2")
-    ell2 = lpt.fpfs.weighted_e2(Const=Const)
+    ell2 = lpt.fpfs.weightedE2(Const=Const)
     np.testing.assert_array_almost_equal(ell2.evaluate(cat), ell_fpfs["fpfs_e2"])
     print("testing shear response of FPFS's e2")
     de2_dg = lpt.g2Perturb1(ell2)

@@ -44,36 +44,18 @@ def tsfunc2(x, mu=0.0, sigma=1.5):
     return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
 
 
-class shapelets_shear(object):
-    """A class for shear response of polar shapelet modes introduced in
+class shapeletPerturb(Observable):
+    """A class for perturbation response of polar shapelet modes introduced in
     https://arxiv.org/abs/astro-ph/0408445
+    [see eq. (37) to eq. (42)]
 
-    In the other class of this pipeline, we will follow
+    In the other classes of this pipeline, we will follow
     https://arxiv.org/abs/1805.08514
     to use shaplet modes to construct shear estimator
     """
     def __init__(self, **kwargs):
-        super(shapelets_shear, self).__init__()
-        self.initialize_meta(**kwargs)
+        super(shapeletPerturb, self).__init__(**kwargs)
         return
-
-    def initialize_meta(self, **kwargs):
-        try:
-            self.meta
-        except AttributeError:
-            self.meta = {}
-        self.meta.update(**kwargs)
-        try:
-            self.meta2
-        except AttributeError:
-            self.meta2 = {
-                "modes_tmp": [],  # used to call a funciton
-            }
-        self.meta2.update(**kwargs)
-        return
-
-    def aind(self, colname):
-        return self.meta2["modes_tmp"].index(colname)
 
     def _dm_dg1(self, x, basis_name):
         if basis_name == "fpfs_M00":
@@ -151,7 +133,7 @@ class shapelets_shear(object):
         return out
 
 
-class weighted_e1(Observable, shapelets_shear):
+class weightedE1(shapeletPerturb):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -163,7 +145,7 @@ class weighted_e1(Observable, shapelets_shear):
         Args:
             Const (float):  FPFS weighting parameter
         """
-        super(weighted_e1, self).__init__(Const=Const)
+        super(weightedE1, self).__init__(Const=Const)
         self.umode_names = None
         self.meta["modes"] = [
             "fpfs_M22c",
@@ -186,7 +168,7 @@ class weighted_e1(Observable, shapelets_shear):
         return out
 
 
-class weighted_e2(Observable, shapelets_shear):
+class weightedE2(shapeletPerturb):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -198,7 +180,7 @@ class weighted_e2(Observable, shapelets_shear):
         Args:
             Const (float):  FPFS weighting parameter
         """
-        super(weighted_e2, self).__init__(Const=Const)
+        super(weightedE2, self).__init__(Const=Const)
         self.umode_names = None
         self.meta["modes"] = [
             "fpfs_M22s",
@@ -221,7 +203,7 @@ class weighted_e2(Observable, shapelets_shear):
         return out
 
 
-# class peak_weight(Observable):
+# class peak_weight(shapeletPerturb):
 #     def __init__(self, **kwargs):
 #         super(peak_weight, self).__init__()
 #         self.mode_names = [
