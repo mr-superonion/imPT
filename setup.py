@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 # version of the package
 __version__ = ""
 fname = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "lensPT", "__version__.py"
+    os.path.dirname(os.path.realpath(__file__)), "lenspt", "__version__.py"
 )
 with open(fname, "r") as ff:
     exec(ff.read())
@@ -15,7 +15,7 @@ with open(fname, "r") as ff:
 # ]
 
 setup(
-    name="lensPT",
+    name="lenspt",
     version=__version__,
     description="Auto-diff Estimator of Lensing Perturbations",
     author="Xiangchong Li",

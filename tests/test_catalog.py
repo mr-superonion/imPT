@@ -1,4 +1,4 @@
-# lensPT autodiff pipeline
+# lenspt autodiff pipeline
 # Copyright 20221113 Xiangchong Li.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -11,11 +11,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-"""This unit test checks whether lensPT can initialize lensPT catalog
+"""This unit test checks whether lenspt can initialize lenspt catalog
 successfully
 """
 import fitsio
-import lensPT as lpt
+import lenspt as lpt
 
 
 def test_catalog():
@@ -33,9 +33,9 @@ def test_catalog():
     lpt.Catalog(mode_names=colnames, data=data)
     lpt.Catalog(data="data/fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
     cat = lpt.Catalog(
-            data="data/fpfs-cut32-0000-g1-0000.fits",
-            mode_names=colnames,
-            )
+        data="data/fpfs-cut32-0000-g1-0000.fits",
+        mode_names=colnames,
+    )
     cat.mode_names
     cat.data
     return

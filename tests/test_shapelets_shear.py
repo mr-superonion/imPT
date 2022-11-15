@@ -1,4 +1,4 @@
-# lensPT autodiff pipeline
+# lenspt autodiff pipeline
 # Copyright 20221113 Xiangchong Li.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -11,13 +11,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-"""This unit test checks whether lensPT's shapelets' shear response is
+"""This unit test checks whether lenspt's shapelets' shear response is
 implemented correctly.
 """
 
 import fitsio
 import numpy as np
-import lensPT as lpt
+import lenspt as lpt
 
 
 ndata = 30
