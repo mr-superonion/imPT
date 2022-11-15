@@ -11,6 +11,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+"""This unit test checks whether lensPT can initialize lensPT catalog
+successfully
+"""
 import fitsio
 import lensPT as lpt
 

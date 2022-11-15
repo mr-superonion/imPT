@@ -11,6 +11,10 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+"""This unit test checks whether lensPT's shapelets' shear response is
+implemented correctly.
+"""
+
 import fitsio
 import numpy as np
 import lensPT as lpt
