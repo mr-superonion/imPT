@@ -23,18 +23,18 @@ from .utils import *
 from .utils import tsfunc2
 
 
-class ShapeletPerturb(Observable):
-    """A class for perturbation response of polar shapelet modes introduced in
+class FPFSObservable(Observable):
+    """A class for FPFS observables, which implements perturbation response of
+    polar shapelet modes introduced in
     https://arxiv.org/abs/astro-ph/0408445
-    [see eq. (37) to eq. (42)]
-
-    In the other classes of this pipeline, we will follow
+    [see eq. (37) to eq. (42)],
+    and FPFS peak modes intriduced in
     https://arxiv.org/abs/1805.08514
-    to use shaplet modes to construct shear estimator
+    These shear responses are to construct shear estimator.
     """
 
     def __init__(self, **kwargs):
-        super(ShapeletPerturb, self).__init__(**kwargs)
+        super(FPFSObservable, self).__init__(**kwargs)
         return
 
     def _dm_dg1(self, x, basis_name):
@@ -117,7 +117,7 @@ class ShapeletPerturb(Observable):
         return self.dm_dg
 
 
-class WeightedE1(ShapeletPerturb):
+class WeightedE1(FPFSObservable):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -152,7 +152,7 @@ class WeightedE1(ShapeletPerturb):
         return out
 
 
-class WeightedE2(ShapeletPerturb):
+class WeightedE2(FPFSObservable):
     """A class for FPFS ellipticity [the second component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -185,7 +185,7 @@ class WeightedE2(ShapeletPerturb):
         )
         return out
 
-class SelectWeight(ShapeletPerturb):
+class SelectWeight(FPFSObservable):
     """A class for FPFS selection weight introduced by
     https://arxiv.org/abs/2208.10522
     """
@@ -229,7 +229,7 @@ class SelectWeight(ShapeletPerturb):
         return w0*w2
 
 
-# class PeakWeight(ShapeletPerturb):
+# class PeakWeight(FPFSObservable):
 #     def __init__(self, **kwargs):
 #         super(peak_weight, self).__init__()
 #         return
