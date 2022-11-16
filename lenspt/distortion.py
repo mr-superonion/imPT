@@ -53,8 +53,8 @@ class Gperturb1(Observable):
         """Returns the first-order shear response."""
         res = jnp.dot(
             self.parent_obj._obs_grad_func(x),
-            self.parent_obj.distort.dm_dg(x, self.meta2["modes_tmp"], self.ig)
-            )
+            self.parent_obj.distort.dm_dg(x, self.meta2["modes_tmp"], self.ig),
+        )
         return res
 
 

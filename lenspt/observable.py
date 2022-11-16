@@ -75,8 +75,7 @@ class Observable(object):
         return
 
     def _set_obs_func(self, func):
-        """Setup observable functions [func, derivative and Hessian]
-        """
+        """Setup observable functions [func, derivative and Hessian]"""
         self._obs_func = func
         self._obs_grad_func = grad(self._obs_func)
         self._obs_hessian_func = jacfwd(jacrev(self._obs_func))

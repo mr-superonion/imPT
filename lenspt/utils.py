@@ -66,4 +66,3 @@ def tsfunc2(x, mu=0.0, sigma=1.5):
         return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
 
     return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
-

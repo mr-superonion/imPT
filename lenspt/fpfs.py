@@ -19,7 +19,6 @@
 
 import jax.numpy as jnp
 from .observable import Observable
-from .utils import *
 from .utils import tsfunc2
 
 
@@ -35,6 +34,7 @@ class FPFSDistort(Observable):
 
     def __init__(self, **kwargs):
         super(FPFSDistort, self).__init__(**kwargs)
+        self.meta2.update(**kwargs)
         return
 
     def _dm_dg1(self, x, basis_name):
@@ -191,6 +191,7 @@ class WeightedE2(Observable):
         )
         return out
 
+
 class SelectWeight(Observable):
     """A class for FPFS selection weight introduced by
     https://arxiv.org/abs/2208.10522
@@ -204,9 +205,11 @@ class SelectWeight(Observable):
             sigma (float):  Smoothness parameter of the cut
         """
         super(SelectWeight, self).__init__(
-                mu0=mu0, sigma0=sigma0,
-                mu2=mu2, sigma2=sigma2,
-                )
+            mu0=mu0,
+            sigma0=sigma0,
+            mu2=mu2,
+            sigma2=sigma2,
+        )
         self.meta["modes"] = [
             "fpfs_M00",
             "fpfs_M20",
@@ -226,16 +229,16 @@ class SelectWeight(Observable):
 
     def _base_func(self, x):
         w0 = tsfunc2(
-                x[self.aind("fpfs_M00")],
-                mu = self.meta["mu0"],
-                sigma = self.meta["sigma0"],
-                )
+            x[self.aind("fpfs_M00")],
+            mu=self.meta["mu0"],
+            sigma=self.meta["sigma0"],
+        )
         w2 = tsfunc2(
-                x[self.aind("fpfs_M20")],
-                mu = self.meta["mu2"],
-                sigma = self.meta["sigma2"],
-                )
-        return w0*w2
+            x[self.aind("fpfs_M20")],
+            mu=self.meta["mu2"],
+            sigma=self.meta["sigma2"],
+        )
+        return w0 * w2
 
 
 # class PeakWeight(Observable):
