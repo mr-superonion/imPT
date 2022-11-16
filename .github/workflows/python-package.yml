@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python package
+name: Python application
 
 on:
   push:
@@ -9,40 +9,42 @@ on:
   pull_request:
     branches: [ "main" ]
 
-jobs:
-    build:
-        runs-on: ubuntu-latest
-        strategy:
-        fail-fast: false
-        matrix:
-        python-version: ["3.9"]
-    steps:
-        - uses: actions/checkout@v3
-    
-        - uses: conda-incubator/setup-miniconda@v2
-            with:
-                python-version: ${{ matrix.python-version }}
-                channels: conda-forge
-                channel-priority: strict
-                show-channel-urls: true
-        
-        - name: configure conda and install code
-            shell: bash -l {0}
-            run: |
-                conda config --set always_yes yes
-                conda install -q mamba
-                mamba install -q \
-                flake8 \
-                pytest \
-                numpy \
-                jax \
-                fitsio 
-                pip install --no-deps -e .
+permissions:
+  contents: read
 
-        - name: Lint with flake8
-            run: |
-                flake8 lenspt/*.py
-        
-        - name: Test with pytest
-            run: |
-                pytest
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    fail-fast: false
+    python-version: ["3.10"]
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge
+        channel-priority: strict
+        show-channel-urls: true
+
+    - name: configure conda and install code
+      shell: bash -l {0}
+      run: |
+        conda config --set always_yes yes
+        conda install -q mamba
+        mamba install -q \
+        flake8 \
+        pytest \
+        numpy \
+        fitsio \
+        jax \
+        fitsio
+        pip install --no-deps -e .
+
+    - name: Lint with flake8
+      run: |
+        flake8 lenspt/*.py
+
+    - name: Test with pytest
+      run: |
+        pytest
