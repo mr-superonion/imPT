@@ -38,7 +38,7 @@ assert data2.shape == (ndata, ncol), "prepared catalog has incorrect shape"
 
 def test_g1():
     print("testing for shapelets' g1 reponses")
-    shapelet_shear = lpt.fpfs.FPFSObservable(modes_tmp=colnames)
+    shapelet_shear = lpt.fpfs.FPFSDistort(modes_tmp=colnames)
     out = shapelet_shear.dm_dg(
         data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 1
     )
@@ -68,7 +68,7 @@ def test_g1():
 
 def test_g2():
     print("testing for shapelets' g2 reponses")
-    shapelet_shear = lpt.fpfs.FPFSObservable(modes_tmp=colnames)
+    shapelet_shear = lpt.fpfs.FPFSDistort(modes_tmp=colnames)
     out = shapelet_shear.dm_dg(
         data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 2
     )

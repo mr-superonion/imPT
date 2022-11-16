@@ -32,7 +32,9 @@ class Gperturb1(Observable):
         super(Gperturb1, self).__init__()
         if not hasattr(parent_obj, "grad"):
             raise ValueError("obs_fun does not has gradient")
-        if not hasattr(parent_obj, "dm_dg"):
+        if not hasattr(parent_obj, "distort"):
+            raise ValueError("input parent_obj should have shear response")
+        if not hasattr(parent_obj.distort, "dm_dg"):
             raise ValueError("input parent_obj should have shear response")
         self.initialize_with_parent(parent_obj)
         self.ig = 0
@@ -44,13 +46,14 @@ class Gperturb1(Observable):
         self.meta = meta
         self.meta2 = meta2
         self.parent_obj = parent_obj
+        self.distort = parent_obj.distort.make_child()
         return
 
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
             self.parent_obj._obs_grad_func(x),
-            self.parent_obj.dm_dg(x, self.meta2["modes_tmp"], self.ig)
+            self.parent_obj.distort.dm_dg(x, self.meta2["modes_tmp"], self.ig)
             )
         return res
 
@@ -63,7 +66,6 @@ class G1Perturb1(Gperturb1):
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject."""
         super(G1Perturb1, self).__init__(parent_obj)
-        self.dm_dg = self.parent_obj.make_child_dmdg()
         self.ig = 1
         return
 
@@ -76,6 +78,5 @@ class G2Perturb1(Gperturb1):
     def __init__(self, parent_obj):
         """Initializes shear response object using an ObsObject."""
         super(G2Perturb1, self).__init__(parent_obj)
-        self.dm_dg = self.parent_obj.make_child_dmdg()
         self.ig = 2
         return

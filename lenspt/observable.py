@@ -52,8 +52,6 @@ class Observable(object):
         super(Observable, self).__init__()
         self.initialize_meta(**kwargs)
         self._set_obs_func(self._base_func)
-        self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
-        self._obs_grad_func = grad(self._obs_func)
         self.parent_obj = None
         return
 
@@ -73,11 +71,16 @@ class Observable(object):
             self.meta2 = {
                 "modes_tmp": [],  # used to call a funciton
             }
-        self.meta2.update(**kwargs)
+        self.distort = None
         return
 
     def _set_obs_func(self, func):
+        """Setup observable functions [func, derivative and Hessian]
+        """
         self._obs_func = func
+        self._obs_grad_func = grad(self._obs_func)
+        self._obs_hessian_func = jacfwd(jacrev(self._obs_func))
+        return
 
     def _base_func(*args):
         raise RuntimeError(
@@ -88,14 +91,16 @@ class Observable(object):
 
     def _make_obs_new(self, other):
         obs = Observable()
-        obs.meta = self.meta
-        for kk in other.keys():
-            if kk in obs.meta.keys():
-                obs.meta[kk] = list(set(obs.meta[kk]) | set(other.meta[kk]))
-            else:
+        obs.meta = self.meta.copy()
+        for kk in ["modes_parent", "modes_child", "modes"]:
+            obs.meta[kk] = list(set(obs.meta[kk]) | set(other.meta[kk]))
+        for kk in other.meta.keys():
+            if kk not in obs.meta.keys():
                 obs.meta[kk] = other.meta[kk]
+        self.meta2 = other.meta2
         obs.meta2 = self.meta2
-        obs.meta2.update(other.meta2)
+        obs.distort = self.distort
+        obs.distort.meta2 = obs.meta2
         return obs
 
     def make_metas_child(self):

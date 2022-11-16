@@ -23,7 +23,7 @@ from .utils import *
 from .utils import tsfunc2
 
 
-class FPFSObservable(Observable):
+class FPFSDistort(Observable):
     """A class for FPFS observables, which implements perturbation response of
     polar shapelet modes introduced in
     https://arxiv.org/abs/astro-ph/0408445
@@ -34,7 +34,7 @@ class FPFSObservable(Observable):
     """
 
     def __init__(self, **kwargs):
-        super(FPFSObservable, self).__init__(**kwargs)
+        super(FPFSDistort, self).__init__(**kwargs)
         return
 
     def _dm_dg1(self, x, basis_name):
@@ -112,12 +112,12 @@ class FPFSObservable(Observable):
         out = jnp.array([_func_(x=data, basis_name=nm) for nm in name_list]).T
         return out
 
-    def make_child_dmdg(self):
+    def make_child(self):
         # TODO: This need to be improved
-        return self.dm_dg
+        return self
 
 
-class WeightedE1(FPFSObservable):
+class WeightedE1(Observable):
     """A class for FPFS ellipticity [the first component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -143,6 +143,9 @@ class WeightedE1(FPFSObservable):
             "fpfs_M00",
             "fpfs_M40",
         ]
+        self.distort = FPFSDistort()
+        # by doing so, we link meta2 together
+        self.distort.meta2 = self.meta2
         return
 
     def _base_func(self, x):
@@ -152,7 +155,7 @@ class WeightedE1(FPFSObservable):
         return out
 
 
-class WeightedE2(FPFSObservable):
+class WeightedE2(Observable):
     """A class for FPFS ellipticity [the second component] introduced by
     https://arxiv.org/abs/1805.08514
     We take the form of eq. (36) in
@@ -177,6 +180,9 @@ class WeightedE2(FPFSObservable):
             "fpfs_M00",
             "fpfs_M40",
         ]
+        self.distort = FPFSDistort()
+        # by doing so, we link meta2 together
+        self.distort.meta2 = self.meta2
         return
 
     def _base_func(self, x):
@@ -185,7 +191,7 @@ class WeightedE2(FPFSObservable):
         )
         return out
 
-class SelectWeight(FPFSObservable):
+class SelectWeight(Observable):
     """A class for FPFS selection weight introduced by
     https://arxiv.org/abs/2208.10522
     """
@@ -213,6 +219,9 @@ class SelectWeight(FPFSObservable):
             "fpfs_M42c",
             "fpfs_M42s",
         ]
+        self.distort = FPFSDistort()
+        # by doing so, we link meta2 together
+        self.distort.meta2 = self.meta2
         return
 
     def _base_func(self, x):
@@ -229,7 +238,7 @@ class SelectWeight(FPFSObservable):
         return w0*w2
 
 
-# class PeakWeight(FPFSObservable):
+# class PeakWeight(Observable):
 #     def __init__(self, **kwargs):
 #         super(peak_weight, self).__init__()
 #         return
