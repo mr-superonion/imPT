@@ -43,7 +43,7 @@ jobs:
         jax \
         fitsio
 
-        pip install -e --no-deps .
+        pip install --no-deps .
 
 
     - name: Lint with flake8
