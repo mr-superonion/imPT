@@ -20,6 +20,7 @@ import fitsio
 import numpy as np
 import lenspt as lpt
 from jax import config
+
 config.update("jax_enable_x64", True)
 
 

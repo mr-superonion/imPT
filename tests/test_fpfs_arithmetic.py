@@ -19,6 +19,7 @@ import fitsio
 import numpy as np
 import lenspt as lpt
 from jax import config
+
 config.update("jax_enable_x64", True)
 
 
@@ -60,14 +61,15 @@ def test_add():
     dte1_dg = lpt.G1Perturb1(te1)
     np.testing.assert_array_almost_equal(
         dte1_dg.evaluate(cat),
-        ell_fpfs["fpfs_R1E"] +ell_fpfs["fpfs_R1E"],
+        ell_fpfs["fpfs_R1E"] + ell_fpfs["fpfs_R1E"],
     )
     print("testing noise response of FPFS's e1 + e2")
     noise_e = lpt.NoisePerturb2(esum)
     np.testing.assert_array_almost_equal(
-            noise_e.evaluate(cat),
-            noicorr_fpfs_e1+noicorr_fpfs_e2)
+        noise_e.evaluate(cat), noicorr_fpfs_e1 + noicorr_fpfs_e2
+    )
     return
+
 
 def test_sub():
     print("testing measurement for FPFS's e1 - e2")
@@ -79,10 +81,9 @@ def test_sub():
     print("testing noise response of FPFS's e1 - e2")
     noise_e = lpt.NoisePerturb2(ediff)
     np.testing.assert_array_almost_equal(
-            noise_e.evaluate(cat),
-            noicorr_fpfs_e1-noicorr_fpfs_e2)
+        noise_e.evaluate(cat), noicorr_fpfs_e1 - noicorr_fpfs_e2
+    )
     return
-
 
 
 if __name__ == "__main__":

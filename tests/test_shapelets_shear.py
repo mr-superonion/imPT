@@ -19,6 +19,7 @@ import fitsio
 import numpy as np
 import lenspt as lpt
 from jax import config
+
 config.update("jax_enable_x64", True)
 
 
@@ -42,9 +43,7 @@ assert data2.shape == (ndata, ncol), "prepared catalog has incorrect shape"
 def test_g1():
     print("testing for shapelets' g1 reponses")
     shapelet_shear = lpt.fpfs.FPFSDistort(meta2)
-    out = shapelet_shear.dm_dg(
-        data2, 1
-    )
+    out = shapelet_shear.dm_dg(data2, 1)
     assert out.shape == (ndata, 7), "shear response has incorrect shape"
 
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22c")]
@@ -55,16 +54,20 @@ def test_g1():
         * (data2[:, colnames.index("fpfs_M00")] - data2[:, colnames.index("fpfs_M40")])
     )
     np.testing.assert_array_almost_equal(
-        res_00, out[:, colnames.index("fpfs_M00")],
+        res_00,
+        out[:, colnames.index("fpfs_M00")],
     )
     np.testing.assert_array_almost_equal(
-        res_20, out[:, colnames.index("fpfs_M20")],
+        res_20,
+        out[:, colnames.index("fpfs_M20")],
     )
     np.testing.assert_array_almost_equal(
-        res_22c, out[:, colnames.index("fpfs_M22c")],
+        res_22c,
+        out[:, colnames.index("fpfs_M22c")],
     )
     np.testing.assert_array_almost_equal(
-        np.zeros(ndata), out[:, colnames.index("fpfs_M22s")],
+        np.zeros(ndata),
+        out[:, colnames.index("fpfs_M22s")],
     )
     return
 
@@ -72,9 +75,7 @@ def test_g1():
 def test_g2():
     print("testing for shapelets' g2 reponses")
     shapelet_shear = lpt.fpfs.FPFSDistort(meta2)
-    out = shapelet_shear.dm_dg(
-        data2, 2
-    )
+    out = shapelet_shear.dm_dg(data2, 2)
     assert out.shape == (ndata, 7), "shear response has incorrect shape"
 
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22s")]
@@ -85,17 +86,21 @@ def test_g2():
         * (data2[:, colnames.index("fpfs_M00")] - data2[:, colnames.index("fpfs_M40")])
     )
     np.testing.assert_array_almost_equal(
-        res_00, out[:, colnames.index("fpfs_M00")],
-        )
+        res_00,
+        out[:, colnames.index("fpfs_M00")],
+    )
     np.testing.assert_array_almost_equal(
-        res_20, out[:, colnames.index("fpfs_M20")],
-        )
+        res_20,
+        out[:, colnames.index("fpfs_M20")],
+    )
     np.testing.assert_array_almost_equal(
-        np.zeros(ndata), out[:, colnames.index("fpfs_M22c")],
-        )
-    np.testing.assert_array_almost_equal(res_22s,
+        np.zeros(ndata),
+        out[:, colnames.index("fpfs_M22c")],
+    )
+    np.testing.assert_array_almost_equal(
+        res_22s,
         out[:, colnames.index("fpfs_M22s")],
-        )
+    )
     return
 
 
