@@ -32,9 +32,9 @@ class FPFSDistort(Observable):
     These shear responses are to construct shear estimator.
     """
 
-    def __init__(self, **kwargs):
-        super(FPFSDistort, self).__init__(**kwargs)
-        self.meta2.update(**kwargs)
+    def __init__(self, meta2):
+        super(FPFSDistort, self).__init__()
+        self.meta2 = meta2
         return
 
     def _dm_dg1(self, x, basis_name):
@@ -77,12 +77,11 @@ class FPFSDistort(Observable):
             out = 0.0
         return out
 
-    def dm_dg(self, data, name_list, g_comp):
+    def dm_dg(self, data, g_comp):
         """Returns shear response of shapelet basis
 
         Args:
             data (ndarray):     multi-row array
-            name_list (list):   a list of name of the shapelet basis
             g_comp (int):       the component of shear [1 or 2]
         Returns:
             out (ndarray):      shear responses for the shapelet bases
@@ -109,7 +108,9 @@ class FPFSDistort(Observable):
 
         else:
             raise ValueError("g_comp can only be 1 or 2")
-        out = jnp.array([_func_(x=data, basis_name=nm) for nm in name_list]).T
+        out = jnp.array(
+            [_func_(x=data, basis_name=nm) for nm in self.meta2["modes_tmp"]]
+        ).T
         return out
 
     def make_child(self):
@@ -143,9 +144,7 @@ class WeightedE1(Observable):
             "fpfs_M00",
             "fpfs_M40",
         ]
-        self.distort = FPFSDistort()
-        # by doing so, we link meta2 together
-        self.distort.meta2 = self.meta2
+        self.distort = FPFSDistort(self.meta2)
         return
 
     def _base_func(self, x):
@@ -180,9 +179,7 @@ class WeightedE2(Observable):
             "fpfs_M00",
             "fpfs_M40",
         ]
-        self.distort = FPFSDistort()
-        # by doing so, we link meta2 together
-        self.distort.meta2 = self.meta2
+        self.distort = FPFSDistort(self.meta2)
         return
 
     def _base_func(self, x):
@@ -222,9 +219,7 @@ class SelectWeight(Observable):
             "fpfs_M42c",
             "fpfs_M42s",
         ]
-        self.distort = FPFSDistort()
-        # by doing so, we link meta2 together
-        self.distort.meta2 = self.meta2
+        self.distort = FPFSDistort(self.meta2)
         return
 
     def _base_func(self, x):

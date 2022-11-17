@@ -1,4 +1,5 @@
 # lensPT
+[![Python package](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml/badge.svg)](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml)
 
 Fast estimator for Lensing Perturbation (`lensPT`) from astronomical images
 using the auto differentiating function of jax.

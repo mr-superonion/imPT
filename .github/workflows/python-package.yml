@@ -51,6 +51,7 @@ jobs:
         galsim \
         numba \
         jax \
+        astropy\
         fitsio
 
         cd FPFS

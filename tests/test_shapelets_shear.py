@@ -33,6 +33,7 @@ colnames = [
     "fpfs_M42c",
     "fpfs_M42s",
 ]
+meta2 = {"modes_tmp": colnames}
 ncol = len(colnames)
 data2 = lpt.observable.prepare_array(data, colnames)
 assert data2.shape == (ndata, ncol), "prepared catalog has incorrect shape"
@@ -40,11 +41,11 @@ assert data2.shape == (ndata, ncol), "prepared catalog has incorrect shape"
 
 def test_g1():
     print("testing for shapelets' g1 reponses")
-    shapelet_shear = lpt.fpfs.FPFSDistort(modes_tmp=colnames)
+    shapelet_shear = lpt.fpfs.FPFSDistort(meta2)
     out = shapelet_shear.dm_dg(
-        data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 1
+        data2, 1
     )
-    assert out.shape == (ndata, 4), "shear response has incorrect shape"
+    assert out.shape == (ndata, 7), "shear response has incorrect shape"
 
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22c")]
     res_20 = -np.sqrt(6.0) * data2[:, colnames.index("fpfs_M42c")]
@@ -70,11 +71,11 @@ def test_g1():
 
 def test_g2():
     print("testing for shapelets' g2 reponses")
-    shapelet_shear = lpt.fpfs.FPFSDistort(modes_tmp=colnames)
+    shapelet_shear = lpt.fpfs.FPFSDistort(meta2)
     out = shapelet_shear.dm_dg(
-        data2, ["fpfs_M00", "fpfs_M20", "fpfs_M22c", "fpfs_M22s"], 2
+        data2, 2
     )
-    assert out.shape == (ndata, 4), "shear response has incorrect shape"
+    assert out.shape == (ndata, 7), "shear response has incorrect shape"
 
     res_00 = -np.sqrt(2.0) * data2[:, colnames.index("fpfs_M22s")]
     res_20 = -np.sqrt(6.0) * data2[:, colnames.index("fpfs_M42s")]
