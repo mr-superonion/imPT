@@ -16,6 +16,8 @@ successfully
 """
 import fitsio
 import lenspt as lpt
+from jax import config
+config.update("jax_enable_x64", True)
 
 
 def test_catalog():
