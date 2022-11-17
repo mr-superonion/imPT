@@ -20,8 +20,16 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9"]
+
     steps:
-    - uses: actions/checkout@v3
+    - name: Git checkout currect repo
+      uses: actions/checkout@v3
+
+    - name: Git checkout FPFS repo
+      uses: actions/checkout@v3
+      with:
+        repository: mr-superonion/FPFS
+        path: FPFS
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
@@ -40,10 +48,16 @@ jobs:
         flake8 \
         pytest \
         numpy \
+        galsim \
+        numba \
         jax \
         fitsio
 
-        pip install --no-deps .
+        cd FPFS
+        pip install .
+
+        cd ..
+        pip install .
 
 
     - name: Lint with flake8
