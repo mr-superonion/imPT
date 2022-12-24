@@ -84,7 +84,7 @@ class NlBase:
 
     def __add__(self, other):
         obs = self.make_obs_new()
-        if isinstance(other, type(self)):
+        if isinstance(other, NlBase):
             func = lambda x: self._obs_func(x) + other._obs_func(x)
         elif isinstance(other,(int, float)):
             func = lambda x: self._obs_func(x) + other
@@ -95,7 +95,7 @@ class NlBase:
 
     def __sub__(self, other):
         obs = self.make_obs_new()
-        if isinstance(other, type(self)):
+        if isinstance(other, NlBase):
             func = lambda x: self._obs_func(x) - other._obs_func(x)
         elif isinstance(other,(int, float)):
             func = lambda x: self._obs_func(x) - other
@@ -106,7 +106,7 @@ class NlBase:
 
     def __mul__(self, other):
         obs = self.make_obs_new()
-        if isinstance(other, type(self)):
+        if isinstance(other, NlBase):
             func = lambda x: self._obs_func(x) * other._obs_func(x)
         elif isinstance(other,(int, float)):
             func = lambda x: self._obs_func(x) * other
@@ -117,7 +117,7 @@ class NlBase:
 
     def __truediv__(self, other):
         obs = self.make_obs_new()
-        if isinstance(other, type(self)):
+        if isinstance(other, NlBase):
             func = lambda x: self._obs_func(x) / other._obs_func(x)
         elif isinstance(other,(int, float)):
             func = lambda x: self._obs_func(x) / other

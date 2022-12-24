@@ -1,4 +1,4 @@
-# lenspt autodiff pipeline
+# impt autodiff pipeline
 # Copyright 20221113 Xiangchong Li.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -11,9 +11,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-"""This unit test checks whether lenspt's shapelets' shear response is
-implemented correctly.
-"""
+"""This unit test checks whether FPFS's linear observables (shapelets) shear
+response is implemented correctly. """
 
 import os
 import fitsio
@@ -25,7 +24,7 @@ from impt.fpfs.default import *
 test_fname = os.path.join(
     impt.fpfs.__data_dir__,
     "fpfs-cut32-0000-g1-0000.fits",
-    )
+)
 
 data = fitsio.read(test_fname)[col_names]
 data2 = impt.fpfs.read_catalog(test_fname)
@@ -40,11 +39,7 @@ def test_g1():
 
     res_00 = -np.sqrt(2.0) * data2[:, m22c]
     res_20 = -np.sqrt(6.0) * data2[:, m42c]
-    res_22c = (
-        1.0
-        / np.sqrt(2.0)
-        * (data2[:, m00] - data2[:, m40])
-    )
+    res_22c = 1.0 / np.sqrt(2.0) * (data2[:, m00] - data2[:, m40])
     np.testing.assert_array_almost_equal(
         res_00,
         out[:, m00],
@@ -72,11 +67,7 @@ def test_g2():
 
     res_00 = -np.sqrt(2.0) * data2[:, m22s]
     res_20 = -np.sqrt(6.0) * data2[:, m42s]
-    res_22s = (
-        1.0
-        / np.sqrt(2.0)
-        * (data2[:, m00] - data2[:, m40])
-    )
+    res_22s = 1.0 / np.sqrt(2.0) * (data2[:, m00] - data2[:, m40])
     np.testing.assert_array_almost_equal(
         res_00,
         out[:, m00],

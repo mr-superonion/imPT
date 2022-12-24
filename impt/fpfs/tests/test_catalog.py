@@ -19,10 +19,11 @@ import fitsio
 
 import impt
 from impt.fpfs.default import col_names
+
 test_fname = os.path.join(
     impt.fpfs.__data_dir__,
     "fpfs-cut32-0000-g1-0000.fits",
-    )
+)
 
 
 def test_catalog():
