@@ -20,8 +20,9 @@ from jax import jit
 import jax.numpy as jnp
 from functools import partial
 from fitsio import read as fitsread
+import numpy.lib.recfunctions as rfn
 
-from .default_fpfs import *
+from .default import *
 from ..base import LinRespBase
 
 
@@ -35,7 +36,10 @@ or take it as an example to develop new system
 ## TODO: Contact me if you are interested in adding or developing a new system
 ## of Observables
 def read_catalog(fname):
-    return jnp.array(fitsread.read(fname)[col_names])
+    x = fitsread(fname)[col_names]
+    out = rfn.structured_to_unstructured(x, copy=False)
+    out = jnp.array(out, dtype=jnp.float64)
+    return out
 
 class FpfsLinResponse(LinRespBase):
     @partial(jit, static_argnums=(0,))

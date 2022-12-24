@@ -4,9 +4,8 @@ from .__version__ import __version__
 from .perturb import *
 from . import fpfs
 
-from jax import config
-
 # We need accuracy is below 1e-6
+from jax import config
 config.update("jax_enable_x64", True)
 
 __all__ = ["fpfs"]

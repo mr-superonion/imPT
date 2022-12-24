@@ -19,7 +19,7 @@ from flax import struct
 import jax.numpy as jnp
 from functools import partial
 
-from .default_fpfs import *
+from .default import *
 from ..base import NlBase
 from .linobs import FpfsLinResponse
 

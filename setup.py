@@ -4,18 +4,18 @@ from setuptools import setup, find_packages
 # version of the package
 __version__ = ""
 fname = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "gimpt", "__version__.py"
+    os.path.dirname(os.path.realpath(__file__)), "impt", "__version__.py"
 )
 with open(fname, "r") as ff:
     exec(ff.read())
 
 
 scripts = [
-    "bin/gimpt_config",
+    "bin/impt_config",
 ]
 
 setup(
-    name="gimpt",
+    name="impt",
     version=__version__,
     description="Auto-diff Estimator of Lensing Perturbations",
     author="Xiangchong Li",
