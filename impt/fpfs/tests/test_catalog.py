@@ -14,33 +14,24 @@
 """This unit test checks whether lenspt can initialize lenspt catalog
 successfully
 """
+import os
 import fitsio
-import lenspt as lpt
-from jax import config
 
-config.update("jax_enable_x64", True)
+import impt
+from impt.fpfs.default import col_names
+test_fname = os.path.join(
+    impt.fpfs.__data_dir__,
+    "fpfs-cut32-0000-g1-0000.fits",
+    )
 
 
 def test_catalog():
     print("testing for catalog initialization")
-    data = fitsio.read("data/fpfs-cut32-0000-g1-0000.fits")
-    colnames = [
-        "fpfs_M00",
-        "fpfs_M20",
-        "fpfs_M22c",
-        "fpfs_M22s",
-        "fpfs_M40",
-        "fpfs_M42c",
-        "fpfs_M42s",
-    ]
-    lpt.Catalog(mode_names=colnames, data=data)
-    lpt.Catalog(data="data/fpfs-cut32-0000-g1-0000.fits", mode_names=colnames)
-    cat = lpt.Catalog(
-        data="data/fpfs-cut32-0000-g1-0000.fits",
-        mode_names=colnames,
-    )
-    cat.mode_names
-    cat.data
+    data = fitsio.read(test_fname)[col_names]
+    ndata = len(data)
+    ncol = len(data.dtype.names)
+    cat = impt.fpfs.read_catalog(test_fname)
+    assert cat.shape == (ndata, ncol)
     return
 
 

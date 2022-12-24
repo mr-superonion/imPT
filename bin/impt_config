@@ -11,7 +11,7 @@ printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] ||
 if [[ "${sourced}" == "0" ]]
 then
     echo "You must source this script to use it, not execute it:"
-    echo "source gimpt_config"
+    echo "source impt_config"
     exit
 fi
 
@@ -23,5 +23,6 @@ fi
 
 export JAX_ENABLE_X64=True
 export JAX_PLATFORM_NAME=cpu
+export TF_CPP_MIN_LOG_LEVEL=0
 
-echo "Your shell is now configured to run gimpt standard library"
+echo "Your shell is now configured to run impt standard library"
