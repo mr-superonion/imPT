@@ -16,8 +16,9 @@
 # This file contains pytrees for linear observables measured from images
 # and functions to get their shear response
 
-import jax.numpy as jnp
 from jax import jit
+import jax.numpy as jnp
+from functools import partial
 from fitsio import read as fitsread
 
 from .default_fpfs import *
@@ -31,12 +32,13 @@ __all__ = ["read_catalog", "FpfsLinResponse"]
 The following Classes are for FPFS. Feel free to extend the following system
 or take it as an example to develop new system
 """
-## TODO: Contact me if you are interested in developing a new system of
-## Observables
+## TODO: Contact me if you are interested in adding or developing a new system
+## of Observables
 def read_catalog(fname):
     return jnp.array(fitsread.read(fname)[col_names])
 
 class FpfsLinResponse(LinRespBase):
+    @partial(jit, static_argnums=(0,))
     def _dg1(self, row):
         """Returns shear response array [first component] of shapelet pytree"""
         # shear response for shapelet modes
@@ -73,6 +75,7 @@ class FpfsLinResponse(LinRespBase):
         )
         return out
 
+    @partial(jit, static_argnums=(0,))
     def _dg2(self, row):
         """Returns shear response array [second component] of shapelet pytree"""
         M00 = -jnp.sqrt(2.0) * row[m22s]

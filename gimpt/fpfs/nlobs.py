@@ -14,8 +14,10 @@
 # python lib
 
 # This file contains modules for nonlinear observables measured from images
+from jax import jit
 from flax import struct
 import jax.numpy as jnp
+from functools import partial
 
 from .default_fpfs import *
 from ..base import NlBase
@@ -50,9 +52,11 @@ class FpfsObsBase(NlBase):
             )
 
 class FpfsE1(FpfsObsBase):
+    @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[m22c] / (cat[m00] + self.params.Const)
 
 class FpfsE2(FpfsObsBase):
+    @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[m22s] / (cat[m00] + self.params.Const)

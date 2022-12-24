@@ -16,17 +16,23 @@
 # This file contains modules for perturbation functionals
 # (vector perturbation: shear & tensor perturbation: noise)
 
-import jax.numpy as jnp
 from jax import jit
+import jax.numpy as jnp
+from functools import partial
 
 from .base import NlBase
 
-__all__ = ["RespG1", "RespG2"]
+__all__ = ["RespG1", "RespG2", "BiasNoise"]
 
 
+"""
+For shear perturbation, we provide functionals to dervie the two shear response
+functions.
+This is a mapping from function to function.
+"""
 class RespG1(NlBase):
-    """A Base Class to derive the first-order  shear response [first component]
-    for an observable, following eq. (4) of
+    """A Class to derive the shear response function [1st component] for an
+    observable, following eq. (4) of
     https://arxiv.org/abs/2208.10522
     """
 
@@ -39,6 +45,7 @@ class RespG1(NlBase):
         super().__init__(parent.params, parent, parent.linResp)
         return
 
+    @partial(jit, static_argnums=(0,))
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
@@ -48,8 +55,8 @@ class RespG1(NlBase):
         return res
 
 class RespG2(NlBase):
-    """A Base Class to derive the first-order  shear response [second component]
-    for an observable, following eq. (4) of
+    """A Class to derive the shear response function [2nd component] for an
+    observable, following eq. (4) of
     https://arxiv.org/abs/2208.10522
     """
 
@@ -62,11 +69,45 @@ class RespG2(NlBase):
         super().__init__(parent.params, parent, parent.linResp)
         return
 
-    @jit
+    @partial(jit, static_argnums=(0,))
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
             self.parent._obs_grad_func(x),
             self.linResp._dg2(x),
+        )
+        return res
+
+"""
+For noise perturbation, we provide a functional to dervie the correction function.
+This is a mapping from function to function.
+"""
+class BiasNoise(NlBase):
+    """A Class to derive the second-order noise perturbation function."""
+
+    def __init__(self, parent, noise_cov):
+        """Initializes shear response object using a parent_obj object and
+        a noise covariance matrix.
+        """
+        if not hasattr(parent, "_obs_grad_func"):
+            raise TypeError("parent object does not has gradient operation")
+        super().__init__(parent.params, parent, parent.linResp)
+        self.update_noise_cov(noise_cov)
+        return
+
+    def update_noise_cov(self, noise_cov):
+        self.noise_cov = noise_cov
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, x):
+        """Returns the second-order noise response"""
+        indexes = [[-2, -1], [-2, -1]]
+        res = (
+            jnp.tensordot(
+                self.parent._obs_hessian_func(x),
+                self.noise_cov,
+                indexes,
+            )
+            / 2.0
         )
         return res
