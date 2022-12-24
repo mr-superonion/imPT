@@ -19,6 +19,7 @@ import jax.numpy as jnp
 
 from .default_fpfs import *
 from ..base import NlBase
+from .linobs import FpfsLinResponse
 
 __all__ = ["FpfsE1", "FpfsE2", "FpfsParams", "FpfsNodeParams"]
 
@@ -41,7 +42,12 @@ class FpfsObsBase(NlBase):
     def __init__(self, params, parent=None):
         if not isinstance(params, FpfsParams):
             raise TypeError("params is not FPFS parameters")
-        super().__init__(params, parent)
+        linResp=FpfsLinResponse()
+        super().__init__(
+            params=params,
+            parent=parent,
+            linResp=linResp,
+            )
 
 class FpfsE1(FpfsObsBase):
     def _base_func(self, cat):

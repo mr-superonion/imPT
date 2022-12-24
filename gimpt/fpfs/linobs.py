@@ -37,7 +37,6 @@ def read_catalog(fname):
     return jnp.array(fitsread.read(fname)[col_names])
 
 class FpfsLinResponse(LinRespBase):
-    @jit
     def _dg1(self, row):
         """Returns shear response array [first component] of shapelet pytree"""
         # shear response for shapelet modes
@@ -70,11 +69,10 @@ class FpfsLinResponse(LinRespBase):
                 row[v5_g1],
                 row[v6_g1],
                 row[v7_g1],
-            ]
+            ] + [0] * 16
         )
         return out
 
-    @jit
     def _dg2(self, row):
         """Returns shear response array [second component] of shapelet pytree"""
         M00 = -jnp.sqrt(2.0) * row[m22s]
@@ -106,6 +104,6 @@ class FpfsLinResponse(LinRespBase):
                 row[v5_g2],
                 row[v6_g2],
                 row[v7_g2],
-            ]
+            ] + [0] * 16
         )
         return out

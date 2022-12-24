@@ -39,7 +39,6 @@ class RespG1(NlBase):
         super().__init__(parent.params, parent, parent.linResp)
         return
 
-    @jit
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
