@@ -1,4 +1,4 @@
-# gimpt autodiff pipline
+# impt autodiff pipline
 # Copyright 20221222 Xiangchong Li.
 #
 # This program is free software: you can redistribute it and/or modify

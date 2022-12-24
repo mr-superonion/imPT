@@ -1,4 +1,4 @@
-# gimpt autodiff pipline
+# impt autodiff pipline
 # flake8: noqa
 from .__version__ import __version__
 from .perturb import *
