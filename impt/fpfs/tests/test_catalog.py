@@ -31,7 +31,7 @@ def test_catalog():
     ndata = len(data)
     ncol = len(data.dtype.names)
     cat = impt.fpfs.read_catalog(test_fname)
-    assert cat.shape == (ndata, ncol)
+    assert cat.shape == (ndata, ncol), "Catalog has incorrect shape"
     return
 
 
