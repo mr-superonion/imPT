@@ -1,4 +1,4 @@
-# lensPT
+# imPT
 [![Python package](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml/badge.svg)](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml)
 
 Fast estimator for Lensing Perturbation (`imPT`) from astronomical images
@@ -12,7 +12,7 @@ bias due to the perturbation from image noise.
 
 For developers:
 ```shell
-git clone https://github.com/mr-superonion/lensPT.git
+git clone https://github.com/mr-superonion/imPT.git
 pip install -e . --user
 ```
 before running code, users need to setup the environment by

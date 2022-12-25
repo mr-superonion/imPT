@@ -64,10 +64,10 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        flake8 lenspt
+        flake8 impt
 
     - name: Test with pytest
       shell: bash -l {0}
       run: |
-        source lenspt_config
-        pytest
+        source impt_config
+        pytest -vv
