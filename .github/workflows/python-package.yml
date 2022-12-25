@@ -55,10 +55,10 @@ jobs:
         fitsio
 
         cd FPFS
-        pip install .
+        pip install -e . --user
 
         cd ..
-        pip install .
+        pip install -e . --user
 
 
     - name: Lint with flake8
