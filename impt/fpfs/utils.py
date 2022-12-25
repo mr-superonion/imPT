@@ -35,7 +35,6 @@ def fpfsCov2lptCov(data):
         out (ndarray):      Covariance matrix
     """
     ll = [cn[5:].replace("M", "N").replace("v", "V") for cn in col_names]
-    print(ll)
     out = np.zeros((ncol, ncol))
     for i in range(ncol):
         for j in range(ncol):

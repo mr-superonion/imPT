@@ -6,6 +6,7 @@ from . import fpfs
 
 # We need accuracy is below 1e-6
 from jax import config
+
 config.update("jax_enable_x64", True)
 
 __all__ = ["fpfs"]

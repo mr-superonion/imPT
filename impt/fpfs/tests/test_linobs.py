@@ -19,14 +19,14 @@ import fitsio
 import numpy as np
 
 import impt
-from impt.fpfs.default import *
+import impt.fpfs.default as df
 
 test_fname = os.path.join(
     impt.fpfs.__data_dir__,
     "fpfs-cut32-0000-g1-0000.fits",
 )
 
-data = fitsio.read(test_fname)[col_names]
+data = fitsio.read(test_fname)[df.col_names]
 data2 = impt.fpfs.read_catalog(test_fname)
 ndata = len(data)
 
@@ -35,26 +35,26 @@ def test_g1():
     print("testing for shapelets' g1 reponses")
     linres = impt.fpfs.FpfsLinResponse()
     out = linres.dg1(data2)
-    assert out.shape == (ndata, ncol), "shear response has incorrect shape"
+    assert out.shape == (ndata, df.ncol), "shear response has incorrect shape"
 
-    res_00 = -np.sqrt(2.0) * data2[:, m22c]
-    res_20 = -np.sqrt(6.0) * data2[:, m42c]
-    res_22c = 1.0 / np.sqrt(2.0) * (data2[:, m00] - data2[:, m40])
+    res_00 = -np.sqrt(2.0) * data2[:, df.m22c]
+    res_20 = -np.sqrt(6.0) * data2[:, df.m42c]
+    res_22c = 1.0 / np.sqrt(2.0) * (data2[:, df.m00] - data2[:, df.m40])
     np.testing.assert_array_almost_equal(
         res_00,
-        out[:, m00],
+        out[:, df.m00],
     )
     np.testing.assert_array_almost_equal(
         res_20,
-        out[:, m20],
+        out[:, df.m20],
     )
     np.testing.assert_array_almost_equal(
         res_22c,
-        out[:, m22c],
+        out[:, df.m22c],
     )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata),
-        out[:, m22s],
+        out[:, df.m22s],
     )
     return
 
@@ -63,26 +63,26 @@ def test_g2():
     print("testing for shapelets' g2 reponses")
     linres = impt.fpfs.FpfsLinResponse()
     out = linres.dg2(data2)
-    assert out.shape == (ndata, ncol), "shear response has incorrect shape"
+    assert out.shape == (ndata, df.ncol), "shear response has incorrect shape"
 
-    res_00 = -np.sqrt(2.0) * data2[:, m22s]
-    res_20 = -np.sqrt(6.0) * data2[:, m42s]
-    res_22s = 1.0 / np.sqrt(2.0) * (data2[:, m00] - data2[:, m40])
+    res_00 = -np.sqrt(2.0) * data2[:, df.m22s]
+    res_20 = -np.sqrt(6.0) * data2[:, df.m42s]
+    res_22s = 1.0 / np.sqrt(2.0) * (data2[:, df.m00] - data2[:, df.m40])
     np.testing.assert_array_almost_equal(
         res_00,
-        out[:, m00],
+        out[:, df.m00],
     )
     np.testing.assert_array_almost_equal(
         res_20,
-        out[:, m20],
+        out[:, df.m20],
     )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata),
-        out[:, m22c],
+        out[:, df.m22c],
     )
     np.testing.assert_array_almost_equal(
         res_22s,
-        out[:, m22s],
+        out[:, df.m22s],
     )
     return
 

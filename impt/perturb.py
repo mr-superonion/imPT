@@ -30,6 +30,8 @@ For shear perturbation, we provide functionals to dervie the two shear response
 functions.
 This is a mapping from function to function.
 """
+
+
 class RespG1(NlBase):
     """A Class to derive the shear response function [1st component] for an
     observable, following eq. (4) of
@@ -42,7 +44,7 @@ class RespG1(NlBase):
         """
         if not hasattr(parent, "_obs_grad_func"):
             raise TypeError("parent object does not has gradient operation")
-        super().__init__(parent.params, parent, parent.linResp)
+        super().__init__(parent.params, parent, parent.lin_resp)
         return
 
     @partial(jit, static_argnums=(0,))
@@ -50,9 +52,10 @@ class RespG1(NlBase):
         """Returns the first-order shear response."""
         res = jnp.dot(
             self.parent._obs_grad_func(x),
-            self.linResp._dg1(x),
+            self.lin_resp._dg1(x),
         )
         return res
+
 
 class RespG2(NlBase):
     """A Class to derive the shear response function [2nd component] for an
@@ -66,7 +69,7 @@ class RespG2(NlBase):
         """
         if not hasattr(parent, "_obs_grad_func"):
             raise TypeError("parent object does not has gradient operation")
-        super().__init__(parent.params, parent, parent.linResp)
+        super().__init__(parent.params, parent, parent.lin_resp)
         return
 
     @partial(jit, static_argnums=(0,))
@@ -74,14 +77,17 @@ class RespG2(NlBase):
         """Returns the first-order shear response."""
         res = jnp.dot(
             self.parent._obs_grad_func(x),
-            self.linResp._dg2(x),
+            self.lin_resp._dg2(x),
         )
         return res
+
 
 """
 For noise perturbation, we provide a functional to dervie the correction function.
 This is a mapping from function to function.
 """
+
+
 class BiasNoise(NlBase):
     """A Class to derive the second-order noise perturbation function."""
 
@@ -91,7 +97,7 @@ class BiasNoise(NlBase):
         """
         if not hasattr(parent, "_obs_grad_func"):
             raise TypeError("parent object does not has gradient operation")
-        super().__init__(parent.params, parent, parent.linResp)
+        super().__init__(parent.params, parent, parent.lin_resp)
         self.update_noise_cov(noise_cov)
         return
 

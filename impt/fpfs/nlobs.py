@@ -19,7 +19,7 @@ from flax import struct
 import jax.numpy as jnp
 from functools import partial
 
-from .default import *
+from . import default as df
 from ..base import NlBase
 from .linobs import FpfsLinResponse
 
@@ -29,34 +29,41 @@ __all__ = ["FpfsE1", "FpfsE2", "FpfsParams", "FpfsNodeParams"]
 The following Classes are for FPFS. Feel free to extend the following system
 or take it as an example to develop new system
 """
-## TODO: Contact me if you are interested in developing a new system of
-## Observables
+# TODO: Contact me if you are interested in developing a new system of
+# Observables
+
 
 class FpfsParams(struct.PyTreeNode):
     """FPFS parameter tree, fixed parameter"""
+
     Const: jnp.float64 = struct.field(pytree_node=False, default=10.0)
+
 
 class FpfsNodeParams(struct.PyTreeNode):
     """FPFS parameter tree, unfixed parameter, used for training"""
+
     Const: jnp.float64 = struct.field(pytree_node=True, default=10.0)
+
 
 class FpfsObsBase(NlBase):
     def __init__(self, params, parent=None):
         if not isinstance(params, FpfsParams):
             raise TypeError("params is not FPFS parameters")
-        linResp=FpfsLinResponse()
+        lin_resp = FpfsLinResponse()
         super().__init__(
             params=params,
             parent=parent,
-            linResp=linResp,
-            )
+            lin_resp=lin_resp,
+        )
+
 
 class FpfsE1(FpfsObsBase):
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
-        return cat[m22c] / (cat[m00] + self.params.Const)
+        return cat[df.m22c] / (cat[df.m00] + self.params.Const)
+
 
 class FpfsE2(FpfsObsBase):
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
-        return cat[m22s] / (cat[m00] + self.params.Const)
+        return cat[df.m22s] / (cat[df.m00] + self.params.Const)
