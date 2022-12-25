@@ -22,7 +22,8 @@ from functools import partial
 from fitsio import read as fitsread
 import numpy.lib.recfunctions as rfn
 
-from . import default as df
+from .default import indexes as did
+from .default import col_names
 from ..base import LinRespBase
 
 
@@ -38,7 +39,7 @@ or take it as an example to develop new system
 
 
 def read_catalog(fname):
-    x = fitsread(fname)[df.col_names]
+    x = fitsread(fname)[col_names]
     out = rfn.structured_to_unstructured(x, copy=False)
     out = jnp.array(out, dtype=jnp.float64)
     return out
@@ -49,18 +50,18 @@ class FpfsLinResponse(LinRespBase):
     def _dg1(self, row):
         """Returns shear response array [first component] of shapelet pytree"""
         # shear response for shapelet modes
-        fpfs_m00 = -jnp.sqrt(2.0) * row[df.m22c]
-        fpfs_m20 = -jnp.sqrt(6.0) * row[df.m42c]
-        fpfs_m22c = (row[df.m00] - row[df.m40]) / jnp.sqrt(2.0)
+        fpfs_m00 = -jnp.sqrt(2.0) * row[did["m22c"]]
+        fpfs_m20 = -jnp.sqrt(6.0) * row[did["m42c"]]
+        fpfs_m22c = (row[did["m00"]] - row[did["m40"]]) / jnp.sqrt(2.0)
         # TODO: Include spin-4 term. Will add it when we have M44
-        fpfs_m22s = jnp.zeros_like(row[df.m22s])
+        fpfs_m22s = jnp.zeros_like(row[did["m22s"]])
         # TODO: Incldue the shear response of M40 in the future. This is not
         # required in the FPFS shear estimation (v1~v3), so I set it to zero
         # here (But if you are interested in playing with shear response of
         # this term, please contact me.)
-        fpfs_m40 = jnp.zeros_like(row[df.m40])
-        fpfs_m42c = jnp.zeros_like(row[df.m42c])
-        fpfs_m42s = jnp.zeros_like(row[df.m42s])
+        fpfs_m40 = jnp.zeros_like(row[did["m40"]])
+        fpfs_m42c = jnp.zeros_like(row[did["m42c"]])
+        fpfs_m42s = jnp.zeros_like(row[did["m42s"]])
         out = jnp.stack(
             [
                 fpfs_m00,
@@ -70,14 +71,14 @@ class FpfsLinResponse(LinRespBase):
                 fpfs_m40,
                 fpfs_m42c,
                 fpfs_m42s,
-                row[df.v0_g1],
-                row[df.v1_g1],
-                row[df.v2_g1],
-                row[df.v3_g1],
-                row[df.v4_g1],
-                row[df.v5_g1],
-                row[df.v6_g1],
-                row[df.v7_g1],
+                row[did["v0_g1"]],
+                row[did["v1_g1"]],
+                row[did["v2_g1"]],
+                row[did["v3_g1"]],
+                row[did["v4_g1"]],
+                row[did["v5_g1"]],
+                row[did["v6_g1"]],
+                row[did["v7_g1"]],
             ]
             + [0] * 16
         )
@@ -86,18 +87,18 @@ class FpfsLinResponse(LinRespBase):
     @partial(jit, static_argnums=(0,))
     def _dg2(self, row):
         """Returns shear response array [second component] of shapelet pytree"""
-        fpfs_m00 = -jnp.sqrt(2.0) * row[df.m22s]
-        fpfs_m20 = -jnp.sqrt(6.0) * row[df.m42s]
+        fpfs_m00 = -jnp.sqrt(2.0) * row[did["m22s"]]
+        fpfs_m20 = -jnp.sqrt(6.0) * row[did["m42s"]]
         # TODO: Include spin-4 term. Will add it when we have M44
-        fpfs_m22c = jnp.zeros_like(row[df.m22c])
-        fpfs_m22s = (row[df.m00] - row[df.m40]) / jnp.sqrt(2.0)
+        fpfs_m22c = jnp.zeros_like(row[did["m22c"]])
+        fpfs_m22s = (row[did["m00"]] - row[did["m40"]]) / jnp.sqrt(2.0)
         # TODO: Incldue the shear response of M40 in the future. This is not
         # required in the FPFS shear estimation (v1~v3), so I set it to zero
         # here (But if you are interested in playing with shear response of
         # this term, please contact me.)
-        fpfs_m40 = jnp.zeros_like(row[df.m40])
-        fpfs_m42c = jnp.zeros_like(row[df.m42c])
-        fpfs_m42s = jnp.zeros_like(row[df.m42s])
+        fpfs_m40 = jnp.zeros_like(row[did["m40"]])
+        fpfs_m42c = jnp.zeros_like(row[did["m42c"]])
+        fpfs_m42s = jnp.zeros_like(row[did["m42s"]])
         out = jnp.stack(
             [
                 fpfs_m00,
@@ -107,14 +108,14 @@ class FpfsLinResponse(LinRespBase):
                 fpfs_m40,
                 fpfs_m42c,
                 fpfs_m42s,
-                row[df.v0_g2],
-                row[df.v1_g2],
-                row[df.v2_g2],
-                row[df.v3_g2],
-                row[df.v4_g2],
-                row[df.v5_g2],
-                row[df.v6_g2],
-                row[df.v7_g2],
+                row[did["v0_g2"]],
+                row[did["v1_g2"]],
+                row[did["v2_g2"]],
+                row[did["v3_g2"]],
+                row[did["v4_g2"]],
+                row[did["v5_g2"]],
+                row[did["v6_g2"]],
+                row[did["v7_g2"]],
             ]
             + [0] * 16
         )

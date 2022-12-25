@@ -52,7 +52,7 @@ def fpfsCov2lptCov(data):
 
 
 @jit
-def tsfunc2(x, mu=0.0, sigma=1.5):
+def tsfunc(x, mu, sigma):
     """Returns the weight funciton.
     This is for C2 sinusoidal based funciton
 

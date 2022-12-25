@@ -20,6 +20,7 @@ import numpy as np
 
 import impt
 import impt.fpfs.default as df
+from impt.fpfs.default import indexes as did
 
 test_fname = os.path.join(
     impt.fpfs.__data_dir__,
@@ -37,24 +38,24 @@ def test_g1():
     out = linres.dg1(data2)
     assert out.shape == (ndata, df.ncol), "shear response has incorrect shape"
 
-    res_00 = -np.sqrt(2.0) * data2[:, df.m22c]
-    res_20 = -np.sqrt(6.0) * data2[:, df.m42c]
-    res_22c = 1.0 / np.sqrt(2.0) * (data2[:, df.m00] - data2[:, df.m40])
+    res_00 = -np.sqrt(2.0) * data2[:, did["m22c"]]
+    res_20 = -np.sqrt(6.0) * data2[:, did["m42c"]]
+    res_22c = 1.0 / np.sqrt(2.0) * (data2[:, did["m00"]] - data2[:, did["m40"]])
     np.testing.assert_array_almost_equal(
         res_00,
-        out[:, df.m00],
+        out[:, did["m00"]],
     )
     np.testing.assert_array_almost_equal(
         res_20,
-        out[:, df.m20],
+        out[:, did["m20"]],
     )
     np.testing.assert_array_almost_equal(
         res_22c,
-        out[:, df.m22c],
+        out[:, did["m22c"]],
     )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata),
-        out[:, df.m22s],
+        out[:, did["m22s"]],
     )
     return
 
@@ -65,24 +66,24 @@ def test_g2():
     out = linres.dg2(data2)
     assert out.shape == (ndata, df.ncol), "shear response has incorrect shape"
 
-    res_00 = -np.sqrt(2.0) * data2[:, df.m22s]
-    res_20 = -np.sqrt(6.0) * data2[:, df.m42s]
-    res_22s = 1.0 / np.sqrt(2.0) * (data2[:, df.m00] - data2[:, df.m40])
+    res_00 = -np.sqrt(2.0) * data2[:, did["m22s"]]
+    res_20 = -np.sqrt(6.0) * data2[:, did["m42s"]]
+    res_22s = 1.0 / np.sqrt(2.0) * (data2[:, did["m00"]] - data2[:, did["m40"]])
     np.testing.assert_array_almost_equal(
         res_00,
-        out[:, df.m00],
+        out[:, did["m00"]],
     )
     np.testing.assert_array_almost_equal(
         res_20,
-        out[:, df.m20],
+        out[:, did["m20"]],
     )
     np.testing.assert_array_almost_equal(
         np.zeros(ndata),
-        out[:, df.m22c],
+        out[:, did["m22c"]],
     )
     np.testing.assert_array_almost_equal(
         res_22s,
-        out[:, df.m22s],
+        out[:, did["m22s"]],
     )
     return
 

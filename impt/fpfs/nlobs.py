@@ -18,12 +18,14 @@ from jax import jit
 from flax import struct
 import jax.numpy as jnp
 from functools import partial
+from .default import npeak
 
-from . import default as df
+from .default import indexes as did
 from ..base import NlBase
 from .linobs import FpfsLinResponse
+from .utils import tsfunc
 
-__all__ = ["FpfsE1", "FpfsE2", "FpfsParams", "FpfsNodeParams"]
+__all__ = ["FpfsE1", "FpfsE2", "FpfsParams"]
 
 """
 The following Classes are for FPFS. Feel free to extend the following system
@@ -34,15 +36,35 @@ or take it as an example to develop new system
 
 
 class FpfsParams(struct.PyTreeNode):
-    """FPFS parameter tree, fixed parameter"""
+    """FPFS parameter tree, these parameters are fixed in the tree"""
 
+    # Weighting parameter
     Const: jnp.float64 = struct.field(pytree_node=False, default=10.0)
 
+    # flux selection
+    # cut on magntidue
+    cut_m00: jnp.float64 = struct.field(pytree_node=False, default=25.0)
+    # softening paramter for cut on flux
+    sigma_m00: jnp.float64 = struct.field(pytree_node=False, default=0.2)
 
-class FpfsNodeParams(struct.PyTreeNode):
-    """FPFS parameter tree, unfixed parameter, used for training"""
+    # size selection
+    # cut on size
+    cut_r2_lower: jnp.float64 = struct.field(pytree_node=False, default=0.03)
+    cut_r2_upper: jnp.float64 = struct.field(pytree_node=False, default=2.0)
+    # softening paramter for cut on size
+    sigma_r2: jnp.float64 = struct.field(pytree_node=False, default=0.2)
 
-    Const: jnp.float64 = struct.field(pytree_node=True, default=10.0)
+    # peak selection
+    # cut on peak
+    cut_v: jnp.float64 = struct.field(pytree_node=False, default=0.005)
+    # softening parameter for cut on peak
+    sigma_v: jnp.float64 = struct.field(pytree_node=False, default=0.2)
+
+
+# class FpfsNodeParams(struct.PyTreeNode):
+#     """FPFS parameter tree, unfixed parameter, used for training"""
+
+#     Const: jnp.float64 = struct.field(pytree_node=True, default=10.0)
 
 
 class FpfsObsBase(NlBase):
@@ -57,13 +79,51 @@ class FpfsObsBase(NlBase):
         )
 
 
-class FpfsE1(FpfsObsBase):
+class FpfsWeightSelect(FpfsObsBase):
+    """FPFS selection weight"""
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
-        return cat[df.m22c] / (cat[df.m00] + self.params.Const)
+        # selection on flux
+        w0 = tsfunc(cat[did["m00"]], self.params.cut_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > cut_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.cut_r2_lower) + cat[did["m20"]]
+        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < cut_r2_upper
+        r2u = cat[did["m00"]] * (self.params.cut_r2_upper - 1.0) - cat[did["m20"]]
+        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        out = w0 * w2l * w2u
+        return out
+
+
+class FpfsWeightDetect(FpfsObsBase):
+    """FPFS detection weight"""
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        out = 1.0
+        for i in range(npeak):
+            # v_i - M00 * cut_v > sigma_v
+            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.cut_v
+            out = out * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+        return out
+
+
+class FpfsE1(FpfsObsBase):
+    """FPFS ellipticity (first component)"""
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        return cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
 
 
 class FpfsE2(FpfsObsBase):
+    """FPFS ellipticity (second component)"""
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
-        return cat[df.m22s] / (cat[df.m00] + self.params.Const)
+        return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
