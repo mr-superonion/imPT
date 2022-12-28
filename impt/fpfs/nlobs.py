@@ -25,7 +25,11 @@ from ..base import NlBase
 from .linobs import FpfsLinResponse
 from .utils import tsfunc
 
-__all__ = ["FpfsE1", "FpfsE2", "FpfsParams"]
+__all__ = [
+    "FpfsParams",
+    "FpfsE1", "FpfsE2",
+    "FpfsWeightSelect", "FpfsWeightDetect",
+]
 
 """
 The following Classes are for FPFS. Feel free to extend the following system
@@ -43,20 +47,20 @@ class FpfsParams(struct.PyTreeNode):
 
     # flux selection
     # cut on magntidue
-    cut_m00: jnp.float64 = struct.field(pytree_node=False, default=25.0)
+    lower_m00: jnp.float64 = struct.field(pytree_node=False, default=0.2)
     # softening paramter for cut on flux
     sigma_m00: jnp.float64 = struct.field(pytree_node=False, default=0.2)
 
     # size selection
     # cut on size
-    cut_r2_lower: jnp.float64 = struct.field(pytree_node=False, default=0.03)
-    cut_r2_upper: jnp.float64 = struct.field(pytree_node=False, default=2.0)
+    lower_r2: jnp.float64 = struct.field(pytree_node=False, default=0.03)
+    upper_r2: jnp.float64 = struct.field(pytree_node=False, default=2.0)
     # softening paramter for cut on size
     sigma_r2: jnp.float64 = struct.field(pytree_node=False, default=0.2)
 
     # peak selection
     # cut on peak
-    cut_v: jnp.float64 = struct.field(pytree_node=False, default=0.005)
+    lower_v: jnp.float64 = struct.field(pytree_node=False, default=0.005)
     # softening parameter for cut on peak
     sigma_v: jnp.float64 = struct.field(pytree_node=False, default=0.2)
 
@@ -85,16 +89,16 @@ class FpfsWeightSelect(FpfsObsBase):
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
-        w0 = tsfunc(cat[did["m00"]], self.params.cut_m00, self.params.sigma_m00)
+        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
 
         # selection on size (lower limit)
-        # (M00 + M20) / M00 > cut_r2_lower
-        r2l = cat[did["m00"]] * (1.0 - self.params.cut_r2_lower) + cat[did["m20"]]
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
         w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
 
         # selection on size (upper limit)
-        # (M00 + M20) / M00 < cut_r2_upper
-        r2u = cat[did["m00"]] * (self.params.cut_r2_upper - 1.0) - cat[did["m20"]]
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
         w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
         out = w0 * w2l * w2u
         return out
@@ -107,8 +111,8 @@ class FpfsWeightDetect(FpfsObsBase):
     def _base_func(self, cat):
         out = 1.0
         for i in range(npeak):
-            # v_i - M00 * cut_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.cut_v
+            # v_i - M00 * lower_v > sigma_v
+            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
             out = out * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
         return out
 
