@@ -28,82 +28,76 @@ test_fname = os.path.join(
 
 # impt.fpfs
 cat = impt.fpfs.read_catalog(test_fname)
-params = impt.fpfs.FpfsParams()
-ell1 = impt.fpfs.FpfsE1(params)
-ell2 = impt.fpfs.FpfsE2(params)
-w_sel = impt.fpfs.FpfsWeightSelect(params)
-w_det = impt.fpfs.FpfsWeightDetect(params)
-
 # FPFS
 data = fitsio.read(test_fname)
-ndata = len(data)
-ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
-fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
-
-selnm = []
-cutsig = []
-cut = []
-selnm.append("detect2")
-cutsig.append(params.sigma_v)
-cut.append(params.lower_v)
-selnm.append("M00")
-cutsig.append(params.sigma_m00)
-cut.append(params.lower_m00)
-selnm.append("R2")
-cutsig.append(params.sigma_r2)
-cut.append(params.lower_r2)
-selnm = np.array(selnm)
-cutsig = np.array(cutsig)
-cut = np.array(cut)
-
-fs.clear_outcomes()
-fs.update_selection_weight(selnm, cut, cutsig)
-we1_fpfs = None
-we2_fpfs = None
-we1 = None
 
 
-def test_measurement():
-    print("testing measurement for FPFS's we1")
-    we1 = w_sel * w_det * ell1
+def initialize_FPFS(fs, snlist, params):
+    cutsig = []
+    cut = []
+    for sn in snlist:
+        if sn == "detect2":
+            cutsig.append(params.sigma_v)
+            cut.append(params.lower_v)
+        elif sn == "M00":
+            cutsig.append(params.sigma_m00)
+            cut.append(params.lower_m00)
+        elif sn == "R2":
+            cutsig.append(params.sigma_r2)
+            cut.append(params.lower_r2)
+    cutsig = np.array(cutsig)
+    cut = np.array(cut)
+    fs.clear_outcomes()
+    fs.update_selection_weight(snlist, cut, cutsig)
+    return fs
+
+
+def test_weights():
+    print("testing selection weight on M00")
+    params = impt.fpfs.FpfsParams(lower_m00=4.0, sigma_m00=0.5, lower_r2=-10.0)
+    w_sel = impt.fpfs.FpfsWeightSelect(params)
+    ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
+    fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
+    selnm = np.array(["M00"])
+    fs = initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
-        we1.evaluate(cat),
-        we1_fpfs,
+        fs.ws,
+        w_sel.evaluate(cat),
     )
 
-    print("testing measurement for FPFS's we2")
-    we2 = w_sel * w_det * ell2
-    np.testing.assert_array_almost_equal(
-        we2.evaluate(cat),
-        we2_fpfs,
+    print("testing selection weight on R2")
+    params = impt.fpfs.FpfsParams(
+        lower_m00=-4.0, sigma_m00=0.5, lower_r2=0.12, sigma_r2=0.2
     )
-    return
-
-
-def test_shear_response():
-    print("testing measurement for FPFS's we2")
-    esum = ell1 + ell2
-    esum_f = ell_fpfs["fpfs_e1"] + ell_fpfs["fpfs_e2"]
+    w_sel = impt.fpfs.FpfsWeightSelect(params)
+    ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
+    fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
+    selnm = np.array(["R2"])
+    fs = initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
-        esum.evaluate(cat),
-        esum_f,
+        fs.ws,
+        w_sel.evaluate(cat),
     )
 
-    print("testing shear response of FPFS's we1")
-    dwe1_dg = impt.RespG1(we1)
-    np.testing.assert_array_almost_equal(
-        dwe1_dg.evaluate(cat),
-        ell_fpfs["fpfs_R1E"],
+    print("testing selection weight on peak modes")
+    params = impt.fpfs.FpfsParams(
+        lower_m00=-4.0,
+        sigma_m00=0.5,
+        lower_r2=-4.0,
+        sigma_r2=0.2,
+        sigma_v=0.2,
     )
-
-    print("testing shear response of FPFS's we1")
-    dwe1_dg = impt.RespG1(we1)
+    w_det = impt.fpfs.FpfsWeightDetect(params)
+    ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
+    fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
+    selnm = np.array(["detect2"])
+    fs = initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
-        dwe1_dg.evaluate(cat),
-        ell_fpfs["fpfs_R1E"],
+        fs.ws,
+        w_det.evaluate(cat),
     )
     return
 
 
 if __name__ == "__main__":
-    test_shear_response()
+    test_weights()
