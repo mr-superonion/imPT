@@ -32,39 +32,22 @@ cat = impt.fpfs.read_catalog(test_fname)
 data = fitsio.read(test_fname)
 
 
-def initialize_FPFS(fs, snlist, params):
-    cutsig = []
-    cut = []
-    for sn in snlist:
-        if sn == "detect2":
-            cutsig.append(params.sigma_v)
-            cut.append(params.lower_v)
-        elif sn == "M00":
-            cutsig.append(params.sigma_m00)
-            cut.append(params.lower_m00)
-        elif sn == "R2":
-            cutsig.append(params.sigma_r2)
-            cut.append(params.lower_r2)
-    cutsig = np.array(cutsig)
-    cut = np.array(cut)
-    fs.clear_outcomes()
-    fs.update_selection_weight(snlist, cut, cutsig)
-    return fs
-
-
-def test_weights():
+def test_flux():
     print("testing selection weight on M00")
     params = impt.fpfs.FpfsParams(lower_m00=4.0, sigma_m00=0.5, lower_r2=-10.0)
     w_sel = impt.fpfs.FpfsWeightSelect(params)
     ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
     selnm = np.array(["M00"])
-    fs = initialize_FPFS(fs, selnm, params)
+    fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
         fs.ws,
         w_sel.evaluate(cat),
     )
+    return
 
+
+def test_R2():
     print("testing selection weight on R2")
     params = impt.fpfs.FpfsParams(
         lower_m00=-4.0, sigma_m00=0.5, lower_r2=0.12, sigma_r2=0.2
@@ -73,12 +56,15 @@ def test_weights():
     ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
     selnm = np.array(["R2"])
-    fs = initialize_FPFS(fs, selnm, params)
+    fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
         fs.ws,
         w_sel.evaluate(cat),
     )
+    return
 
+
+def test_peak():
     print("testing selection weight on peak modes")
     params = impt.fpfs.FpfsParams(
         lower_m00=-4.0,
@@ -91,7 +77,7 @@ def test_weights():
     ell_fpfs = fpfs.catalog.fpfsM2E(data, const=params.Const, noirev=False)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False, ratio=1.0)
     selnm = np.array(["detect2"])
-    fs = initialize_FPFS(fs, selnm, params)
+    fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
     np.testing.assert_array_almost_equal(
         fs.ws,
         w_det.evaluate(cat),
@@ -100,4 +86,6 @@ def test_weights():
 
 
 if __name__ == "__main__":
-    test_weights()
+    test_flux()
+    test_R2()
+    test_peak()
