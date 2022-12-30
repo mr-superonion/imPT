@@ -19,7 +19,14 @@ before running code, users need to setup the environment by
 ```shell
 source impt_config
 ```
-or users can put the configure command into __dot__shrc file.
+or you can put the configure command into your dot file.
+
+Before sending pull request, please make sure that the modified code passed the
+pytest and flake8 tests. Run the following commend for the tests
+```shell
+flake8
+pytest -vv
+```
 
 ## Summary
 For the first version of `imPT`, we implement `FPFS` and use `imPT` to auto
