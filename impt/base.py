@@ -119,3 +119,12 @@ class NlBase:
             raise TypeError("Cannot multiply %s to observable" % type(other))
         obs._set_obs_func(func)
         return obs
+
+    def __pow__(self, other):
+        obs = self.make_obs_new()
+        if isinstance(other, (int, float)):
+            func = lambda x: self._obs_func(x) ** other
+        else:
+            raise TypeError("Cannot power %s to observable" % type(other))
+        obs._set_obs_func(func)
+        return obs

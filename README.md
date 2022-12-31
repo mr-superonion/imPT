@@ -22,7 +22,8 @@ source impt_config
 or you can put the configure command into your dot file.
 
 Before sending pull request, please make sure that the modified code passed the
-pytest and flake8 tests. Run the following commend for the tests
+pytest and flake8 tests. Run the following commands under the root directory
+for the tests:
 ```shell
 flake8
 pytest -vv
