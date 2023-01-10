@@ -43,7 +43,7 @@ noicorr_fpfs_de2dg2 = ell_fpfs["fpfs_R2E"] - ell_fpfs_corr["fpfs_R2E"]
 # impt.fpfs
 params = impt.fpfs.FpfsParams(Const=wconst)
 cat = impt.fpfs.read_catalog(test_fname)
-noise_cov = impt.fpfs.utils.fpfsCov2lptCov(data)
+noise_cov = impt.fpfs.utils.fpfscov_to_imptcov(data)
 
 ell1 = impt.fpfs.FpfsE1(params)
 ell2 = impt.fpfs.FpfsE2(params)

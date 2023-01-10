@@ -22,10 +22,10 @@ import jax.numpy as jnp
 
 from .default import col_names, ncol
 
-__all__ = ["fpfsCov2lptCov"]
+__all__ = ["fpfscov_to_imptcov"]
 
 
-def fpfsCov2lptCov(data):
+def fpfscov_to_imptcov(data):
     """Converts FPFS noise Covariance elements into a covariance matrix of
     lensPT.
 
