@@ -23,7 +23,7 @@ from .default import npeak
 from .default import indexes as did
 from ..base import NlBase
 from .linobs import FpfsLinResponse
-from .utils import tsfunc, smfunc
+from .utils import tsfunc2, smfunc, ssfunc2, ssfunc3
 
 __all__ = [
     "FpfsParams",
@@ -76,14 +76,20 @@ class FpfsParams(struct.PyTreeNode):
 
 
 class FpfsObsBase(NlBase):
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         if not isinstance(params, FpfsParams):
             raise TypeError("params is not FPFS parameters")
         lin_resp = FpfsLinResponse()
-        if use_sigmoid:
+        if func_name == "sm":
             self.ufunc = smfunc
+        elif func_name == "ts2":
+            self.ufunc = tsfunc2
+        elif func_name == "ss2":
+            self.ufunc = ssfunc2
+        elif func_name == "ss3":
+            self.ufunc = ssfunc3
         else:
-            self.ufunc = tsfunc
+            raise ValueError("func_name: %s is not supported" % func_name)
         super().__init__(
             params=params,
             parent=parent,
@@ -94,12 +100,12 @@ class FpfsObsBase(NlBase):
 class FpfsWeightSelect(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
             parent=parent,
-            use_sigmoid=use_sigmoid,
+            func_name=func_name,
         )
 
     @partial(jit, static_argnums=(0,))
@@ -125,12 +131,12 @@ class FpfsWeightSelect(FpfsObsBase):
 class FpfsWeightDetect(FpfsObsBase):
     """FPFS detection weight"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
             parent=parent,
-            use_sigmoid=use_sigmoid,
+            func_name=func_name,
         )
 
     @partial(jit, static_argnums=(0,))
@@ -146,7 +152,7 @@ class FpfsWeightDetect(FpfsObsBase):
 class FpfsE1(FpfsObsBase):
     """FPFS ellipticity (first component)"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
@@ -161,12 +167,12 @@ class FpfsE1(FpfsObsBase):
 class FpfsE2(FpfsObsBase):
     """FPFS ellipticity (second component)"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
             parent=parent,
-            use_sigmoid=use_sigmoid,
+            func_name=func_name,
         )
 
     @partial(jit, static_argnums=(0,))
@@ -177,12 +183,12 @@ class FpfsE2(FpfsObsBase):
 class FpfsWeightE1(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
             parent=parent,
-            use_sigmoid=use_sigmoid,
+            func_name=func_name,
         )
 
     @partial(jit, static_argnums=(0,))
@@ -213,12 +219,12 @@ class FpfsWeightE1(FpfsObsBase):
 class FpfsWeightE2(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, use_sigmoid=False):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
         super().__init__(
             params=params,
             parent=parent,
-            use_sigmoid=use_sigmoid,
+            func_name=func_name,
         )
 
     @partial(jit, static_argnums=(0,))
