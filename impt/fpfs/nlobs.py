@@ -27,8 +27,12 @@ from .utils import tsfunc
 
 __all__ = [
     "FpfsParams",
-    "FpfsE1", "FpfsE2",
-    "FpfsWeightSelect", "FpfsWeightDetect",
+    "FpfsE1",
+    "FpfsE2",
+    "FpfsWeightSelect",
+    "FpfsWeightDetect",
+    "FpfsWeightE1",
+    "FpfsWeightE2",
 ]
 
 """
@@ -131,3 +135,59 @@ class FpfsE2(FpfsObsBase):
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
+
+
+class FpfsWeightE1(FpfsObsBase):
+    """FPFS selection weight"""
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        # selection on flux
+        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
+        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        wsel = w0 * w2l * w2u
+
+        wdet = 1.0
+        for i in range(npeak):
+            # v_i - M00 * lower_v > sigma_v
+            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
+            wdet = wdet * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+        e1 = cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
+        return wdet * wsel * e1
+
+
+class FpfsWeightE2(FpfsObsBase):
+    """FPFS selection weight"""
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        # selection on flux
+        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
+        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        wsel = w0 * w2l * w2u
+
+        wdet = 1.0
+        for i in range(npeak):
+            # v_i - M00 * lower_v > sigma_v
+            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
+            wdet = wdet * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+        e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
+        return wdet * wsel * e2
