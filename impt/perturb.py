@@ -95,10 +95,10 @@ class BiasNoise(NlBase):
         """Initializes shear response object using a parent_obj object and
         a noise covariance matrix.
         """
-        if not hasattr(parent, "_obs_grad_func"):
-            raise TypeError("parent object does not has gradient operation")
-        super().__init__(parent.params, parent, parent.lin_resp)
+        if not hasattr(parent, "_obs_hessian_func"):
+            raise TypeError("parent object does not has hessian operation")
         self.update_noise_cov(noise_cov)
+        super().__init__(parent.params, parent, parent.lin_resp)
         return
 
     def update_noise_cov(self, noise_cov):

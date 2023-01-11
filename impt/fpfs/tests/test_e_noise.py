@@ -80,8 +80,8 @@ def test_e1e2():
         bnoise.evaluate(cat),
         noicorr_fpfs_de2dg2,
     )
-    # print(bnoise.evaluate(cat))
-    # print(noicorr_fpfs_de2dg2)
+    print(np.sum(bnoise.evaluate(cat)))
+    print(np.sum(noicorr_fpfs_de2dg2))
     return
 
 
