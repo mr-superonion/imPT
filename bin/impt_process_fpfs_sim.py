@@ -52,13 +52,13 @@ class Worker(object):
         self.Const = cparser.getfloat("FPFS", "weighting_c")
         return
 
-    def run(self, Id):
+    def run(self, ind0):
         pp = "cut%d" % self.rcut
         in_nm1 = os.path.join(
-            self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, Id, self.gver)
+            self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
         )
         in_nm2 = os.path.join(
-            self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, Id, self.gver)
+            self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
         assert os.path.isfile(in_nm1) & os.path.isfile(in_nm2), (
             "Cannot find\
@@ -74,9 +74,9 @@ class Worker(object):
             pass
         return out
 
-    def __call__(self, Id):
-        print("start ID: %d" % (Id))
-        return self.run(Id)
+    def __call__(self, ind0):
+        print("start ID: %d" % (ind0))
+        return self.run(ind0)
 
 
 if __name__ == "__main__":
