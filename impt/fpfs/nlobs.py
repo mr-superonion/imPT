@@ -23,7 +23,7 @@ from .default import npeak
 from .default import indexes as did
 from ..base import NlBase
 from .linobs import FpfsLinResponse
-from .utils import tsfunc
+from .utils import tsfunc, smfunc
 
 __all__ = [
     "FpfsParams",
@@ -76,10 +76,14 @@ class FpfsParams(struct.PyTreeNode):
 
 
 class FpfsObsBase(NlBase):
-    def __init__(self, params, parent=None):
+    def __init__(self, params, parent=None, use_sigmoid=False):
         if not isinstance(params, FpfsParams):
             raise TypeError("params is not FPFS parameters")
         lin_resp = FpfsLinResponse()
+        if use_sigmoid:
+            self.ufunc = smfunc
+        else:
+            self.ufunc = tsfunc
         super().__init__(
             params=params,
             parent=parent,
@@ -90,20 +94,30 @@ class FpfsObsBase(NlBase):
 class FpfsWeightSelect(FpfsObsBase):
     """FPFS selection weight"""
 
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            use_sigmoid=use_sigmoid,
+        )
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
-        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        # w2l = 1.
+        # w2u = 1.
         out = w0 * w2l * w2u
         return out
 
@@ -111,18 +125,33 @@ class FpfsWeightSelect(FpfsObsBase):
 class FpfsWeightDetect(FpfsObsBase):
     """FPFS detection weight"""
 
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            use_sigmoid=use_sigmoid,
+        )
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         out = 1.0
         for i in range(npeak):
             # v_i - M00 * lower_v > sigma_v
             vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            out = out * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+            out = out * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
         return out
 
 
 class FpfsE1(FpfsObsBase):
     """FPFS ellipticity (first component)"""
+
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+        )
 
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
@@ -132,6 +161,14 @@ class FpfsE1(FpfsObsBase):
 class FpfsE2(FpfsObsBase):
     """FPFS ellipticity (second component)"""
 
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            use_sigmoid=use_sigmoid,
+        )
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
@@ -140,27 +177,35 @@ class FpfsE2(FpfsObsBase):
 class FpfsWeightE1(FpfsObsBase):
     """FPFS selection weight"""
 
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            use_sigmoid=use_sigmoid,
+        )
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
-        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
         for i in range(npeak):
             # v_i - M00 * lower_v > sigma_v
             vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
         e1 = cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e1
 
@@ -168,26 +213,34 @@ class FpfsWeightE1(FpfsObsBase):
 class FpfsWeightE2(FpfsObsBase):
     """FPFS selection weight"""
 
+    def __init__(self, params, parent=None, use_sigmoid=False):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            use_sigmoid=use_sigmoid,
+        )
+
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
-        w0 = tsfunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = tsfunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = tsfunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
         for i in range(npeak):
             # v_i - M00 * lower_v > sigma_v
             vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * tsfunc(vp, self.params.sigma_v, self.params.sigma_v)
+            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
         e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e2

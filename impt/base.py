@@ -14,7 +14,7 @@
 # python lib
 
 from flax import struct
-from jax import lax, jit, grad, jacfwd, jacrev
+from jax import lax, jit, grad, hessian
 
 
 class LinRespBase:
@@ -37,6 +37,7 @@ class LinRespBase:
 
 class NlBase:
     def __init__(self, params, parent=None, lin_resp=None):
+        self.nmodes = 0
         if parent is not None:
             if not isinstance(parent, NlBase):
                 raise ValueError("Input parent is not a instance of NlBase")
@@ -56,8 +57,8 @@ class NlBase:
     def _set_obs_func(self, func):
         """Setup observable functions [func, derivative and Hessian]"""
         self._obs_func = jit(func)
-        self._obs_grad_func = jit(grad(self._obs_func))
-        self._obs_hessian_func = jit(jacfwd(jacrev(self._obs_func)))
+        self._obs_grad_func = jit(grad(self._obs_func, argnums=self.nmodes))
+        self._obs_hessian_func = jit(hessian(self._obs_func, argnums=self.nmodes))
         return
 
     def evaluate(self, cat):
