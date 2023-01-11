@@ -53,28 +53,28 @@ def fpfscov_to_imptcov(data):
     return out
 
 
+# @jit
+# def tsfunc(x, mu, sigma):
+#     """Returns the weight funciton.
+#     This is for C2 sinusoidal based funciton
+
+#     Args:
+#         x (ndarray):    input data vector
+#         mu (float):     center of the cut
+#         sigma (float):  width of the selection function
+#     Returns:
+#         out (ndarray):  the weight funciton
+#     """
+#     t = (x - mu) / sigma
+
+#     def func(t):
+#         return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
+
+#     return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
+
+
 @jit
 def tsfunc(x, mu, sigma):
-    """Returns the weight funciton.
-    This is for C2 sinusoidal based funciton
-
-    Args:
-        x (ndarray):    input data vector
-        mu (float):     center of the cut
-        sigma (float):  width of the selection function
-    Returns:
-        out (ndarray):  the weight funciton
-    """
-    t = (x - mu) / sigma
-
-    def func(t):
-        return 1.0 / 2.0 + t / 2.0 + 1.0 / 2.0 / jnp.pi * jnp.sin(t * jnp.pi)
-
-    return jnp.piecewise(t, [t < -1, (t >= -1) & (t <= 1), t > 1], [0.0, func, 1.0])
-
-
-@jit
-def sigfunc(x, mu=0.0, sigma=1.5):
     """Returns the weight funciton [deriv=0], or the *multiplicative factor* to
     the weight function for first order derivative [deriv=1]
 
@@ -87,6 +87,6 @@ def sigfunc(x, mu=0.0, sigma=1.5):
                         factor* to the weight function for first order derivative
                         [deriv=1]
     """
-    expx = np.exp(-(x - mu) / sigma)
+    expx = jnp.exp(-(x - mu) / sigma)
     # sigmoid function
     return 1.0 / (1.0 + expx)
