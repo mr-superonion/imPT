@@ -29,6 +29,7 @@ setup(
         "flax",
         "fpfs",
         "fitsio",
+        "pre-commit",
     ],
     packages=find_packages(),
     scripts=scripts,

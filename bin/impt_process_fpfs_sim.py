@@ -66,7 +66,7 @@ class Worker(object):
             Const=20,
             lower_m00=self.lower_m00,
             sigma_m00=0.2,
-            lower_r2=0.03,
+            lower_r2=0.05,
             upper_r2=2.0,
             sigma_r2=0.2,
             sigma_v=0.2,
