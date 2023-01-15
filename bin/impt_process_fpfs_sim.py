@@ -52,6 +52,7 @@ class Worker(object):
         # Here is  the observable used for test
         self.upper_mag = cparser.getfloat("FPFS", "cut_mag")
         self.lower_m00 = 10 ** ((self.magz - self.upper_mag) / 2.5)
+        self.lower_r2 = cparser.getfloat("FPFS", "cut_r2")
 
         if not os.path.exists(self.indir):
             raise FileNotFoundError("Cannot find input directory: %s!" % self.indir)
@@ -60,13 +61,12 @@ class Worker(object):
         self.gver = gver
         return
 
-    @partial(jax.jit, static_argnums=(0,))
-    def measure(self, data):
+    def prepare_functions(self):
         params = impt.fpfs.FpfsParams(
             Const=20,
             lower_m00=self.lower_m00,
             sigma_m00=0.2,
-            lower_r2=0.05,
+            lower_r2=self.lower_r2,
             upper_r2=2.0,
             sigma_r2=0.2,
             sigma_v=0.2,
@@ -77,19 +77,21 @@ class Worker(object):
         w_sel = impt.fpfs.FpfsWeightSelect(params, func_name=funcnm)
 
         # ellipticity
-        e1 = e1_impt * w_sel * w_det
-        enoise = impt.BiasNoise(e1, self.cov_mat)
-        e1_sum = jnp.sum(e1.evaluate(data))
-        e1_sum = e1_sum - jnp.sum(enoise.evaluate(data))
-        del enoise
+        self.e1 = e1_impt * w_sel * w_det
+        self.enoise = impt.BiasNoise(self.e1, self.cov_mat)
+        self.res1 = impt.RespG1(self.e1)
+        self.rnoise = impt.BiasNoise(self.res1, self.cov_mat)
+        return
+
+    @partial(jax.jit, static_argnums=(0,))
+    def measure(self, data):
+        e1_sum = jnp.sum(self.e1.evaluate(data))
+        e1_sum = e1_sum - jnp.sum(self.enoise.evaluate(data))
         gc.collect()
 
         # shear response
-        res1 = impt.RespG1(e1)
-        rnoise = impt.BiasNoise(res1, self.cov_mat)
-        r1_sum = jnp.sum(res1.evaluate(data))
-        r1_sum = r1_sum - jnp.sum(rnoise.evaluate(data))
-        del res1, rnoise, e1
+        r1_sum = jnp.sum(self.res1.evaluate(data))
+        r1_sum = r1_sum - jnp.sum(self.rnoise.evaluate(data))
         gc.collect()
         return e1_sum, r1_sum
 
@@ -107,14 +109,15 @@ class Worker(object):
         out_nm = os.path.join(self.outdir, "%04d.fits" % ind0)
         if os.path.isfile(out_nm):
             return
+        self.prepare_functions()
         pp = "cut%d" % self.rcut
         in_nm1 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
         )
+        sum_e1_1, sum_r1_1 = self.get_sum_e_r(in_nm1)
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
-        sum_e1_1, sum_r1_1 = self.get_sum_e_r(in_nm1)
         sum_e1_2, sum_r1_2 = self.get_sum_e_r(in_nm2)
         out = np.zeros((4, 1))
         # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
