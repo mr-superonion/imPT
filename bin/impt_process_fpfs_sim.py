@@ -20,7 +20,6 @@ import impt
 import fitsio
 import schwimmbad
 import numpy as np
-import pandas as pd
 import jax.numpy as jnp
 from functools import partial
 
@@ -158,16 +157,9 @@ if __name__ == "__main__":
     outs = []
     for r in pool.map(worker.run, refs):
         outs.append(r)
+
     outs = np.stack(outs)
     nsims = outs.shape[0]
-    fitsio.write(
-        os.path.join(
-            worker.outdir,
-            "bin_m00_sim_%s.fits" % (worker.simname),
-        ),
-        outs,
-    )
-
     # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
     # ('res','<f8')]
     res = np.average(outs, axis=0)
@@ -176,23 +168,6 @@ if __name__ == "__main__":
     merr = (err[1] / res[3] / 2.0) / shear_value / np.sqrt(nsims)
     cbias = res[2] / res[3]
     cerr = err[2] / res[3] / np.sqrt(nsims)
-    df = pd.DataFrame(
-        {
-            "simname": worker.simname.split("galaxy_")[-1],
-            "binave": res[0],
-            "mbias": mbias,
-            "merr": merr,
-            "cbias": cbias,
-            "cerr": cerr,
-        }
-    )
-    df.to_csv(
-        os.path.join(
-            worker.outdir,
-            "bin_m00_sim_%s.csv" % (worker.simname),
-        ),
-        index=False,
-    )
 
     print("Separate galaxies into %d bins: %s" % (len(res[0]), res[0]))
     print("Multiplicative biases for those bins are: ", mbias)
