@@ -1,5 +1,6 @@
 # imPT
 [![Python package](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml/badge.svg)](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml)
+[![Documentation Status](https://readthedocs.org/projects/impt/badge/?version=latest)](https://impt.readthedocs.io/en/latest/?badge=latest)
 
 Fast estimator for Lensing Perturbation (`imPT`) from astronomical images
 using the auto differentiating function of jax.
