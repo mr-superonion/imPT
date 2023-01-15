@@ -50,8 +50,7 @@ class Worker(object):
 
         # This task change the cut on one observable and see how the biases changes.
         # Here is  the observable used for test
-        self.ncut = 1
-        self.upper_mag = cparser.getfloat("FPFS", "cutB")
+        self.upper_mag = cparser.getfloat("FPFS", "cut_mag")
         self.lower_m00 = 10 ** ((self.magz - self.upper_mag) / 2.5)
 
         if not os.path.exists(self.indir):
@@ -80,29 +79,24 @@ class Worker(object):
         # ellipticity
         e1 = e1_impt * w_sel * w_det
         enoise = impt.BiasNoise(e1, self.cov_mat)
-        tmp = e1.evaluate(data)
-        e1_sum = jnp.sum(tmp)
-        del tmp
-        gc.collect()
-        tmp = enoise.evaluate(data)
-        e1_sum = e1_sum - jnp.sum(tmp)
-        del enoise, tmp
+        e1_sum = jnp.sum(e1.evaluate(data))
+        e1_sum = e1_sum - jnp.sum(enoise.evaluate(data))
+        del enoise
         gc.collect()
 
         # shear response
         res1 = impt.RespG1(e1)
         rnoise = impt.BiasNoise(res1, self.cov_mat)
-        tmp = res1.evaluate(data)
-        r1_sum = jnp.sum(tmp)
-        del tmp
-        gc.collect()
-        tmp = rnoise.evaluate(data)
-        r1_sum = r1_sum - jnp.sum(tmp)
-        del res1, rnoise, e1, tmp
+        r1_sum = jnp.sum(res1.evaluate(data))
+        r1_sum = r1_sum - jnp.sum(rnoise.evaluate(data))
+        del res1, rnoise, e1
         gc.collect()
         return e1_sum, r1_sum
 
     def run(self, ind0):
+        out_nm = os.path.join(self.outdir, "%04d.fits" % ind0)
+        if os.path.isfile(out_nm):
+            return
         pp = "cut%d" % self.rcut
         in_nm1 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
@@ -110,16 +104,14 @@ class Worker(object):
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
-        assert os.path.isfile(in_nm1) & os.path.isfile(
-            in_nm2
+        assert os.path.isfile(in_nm1) & os.path.isfile(in_nm2
         ), "Cannot find input galaxy shear catalogs : %s , %s" % (in_nm1, in_nm2)
         mm1 = impt.fpfs.read_catalog(in_nm1)
         mm2 = impt.fpfs.read_catalog(in_nm2)
-        gc.collect()
 
         # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
         # ('res','<f8')]
-        out = np.zeros((4, self.ncut))
+        out = np.zeros((4, 1))
         sum_e1_1, sum_r1_1 = self.measure(mm1)
         sum_e1_2, sum_r1_2 = self.measure(mm2)
         del mm1, mm2
@@ -128,7 +120,7 @@ class Worker(object):
         out[1, 0] = sum_e1_2 - sum_e1_1
         out[2, 0] = (sum_e1_1 + sum_e1_2) / 2.0
         out[3, 0] = (sum_r1_1 + sum_r1_2) / 2.0
-        fitsio.write(os.path.join(self.outdir, "%04d.fits" % ind0), out)
+        fitsio.write(out_nm, out)
         return out
 
 
