@@ -21,7 +21,7 @@ setup(
     description="Auto-diff Estimator of Lensing Perturbations",
     author="Xiangchong Li",
     author_email="mr.superonion@hotmail.com",
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=[
         "numpy",
         "schwimmbad",
