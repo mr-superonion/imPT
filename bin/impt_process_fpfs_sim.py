@@ -36,7 +36,9 @@ class Worker(object):
         cparser.read(config_name)
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
-        cov_fname = os.path.join(impt.fpfs.__data_dir__, "modes_cov_mat_paper3_045.fits")
+        cov_fname = os.path.join(
+            impt.fpfs.__data_dir__, "modes_cov_mat_paper3_045.fits"
+        )
         self.cov_mat = jnp.array(fitsio.read(cov_fname))
 
         # setup processor
@@ -62,21 +64,21 @@ class Worker(object):
     @partial(jax.jit, static_argnums=(0,))
     def measure(self, data):
         params = impt.fpfs.FpfsParams(
-                Const = 20,
-                lower_m00=self.lower_m00,
-                sigma_m00=0.2,
-                lower_r2=0.05,
-                upper_r2=1.5,
-                sigma_r2=0.2,
-                sigma_v=0.2,
-            )
+            Const=20,
+            lower_m00=self.lower_m00,
+            sigma_m00=0.2,
+            lower_r2=0.05,
+            upper_r2=1.5,
+            sigma_r2=0.2,
+            sigma_v=0.2,
+        )
         funcnm = "ts2"
         e1_impt = impt.fpfs.FpfsE1(params, func_name=funcnm)
         w_det = impt.fpfs.FpfsWeightDetect(params, func_name=funcnm)
         w_sel = impt.fpfs.FpfsWeightSelect(params, func_name=funcnm)
 
         # ellipticity
-        e1 = e1_impt*w_sel*w_det
+        e1 = e1_impt * w_sel * w_det
         enoise = impt.BiasNoise(e1, self.cov_mat)
         tmp = e1.evaluate(data)
         e1_sum = jnp.sum(tmp)
@@ -108,10 +110,9 @@ class Worker(object):
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
-        assert os.path.isfile(in_nm1) & os.path.isfile(in_nm2), (
-            "Cannot find input galaxy shear catalogs : %s , %s"
-            % (in_nm1, in_nm2)
-        )
+        assert os.path.isfile(in_nm1) & os.path.isfile(
+            in_nm2
+        ), "Cannot find input galaxy shear catalogs : %s , %s" % (in_nm1, in_nm2)
         mm1 = impt.fpfs.read_catalog(in_nm1)
         mm2 = impt.fpfs.read_catalog(in_nm2)
         gc.collect()
@@ -119,15 +120,15 @@ class Worker(object):
         # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
         # ('res','<f8')]
         out = np.zeros((4, self.ncut))
-        sumE1_1, sumR1_1 = self.measure(mm1)
-        sumE1_2, sumR1_2 = self.measure(mm2)
+        sum_e1_1, sum_r1_1 = self.measure(mm1)
+        sum_e1_2, sum_r1_2 = self.measure(mm2)
         del mm1, mm2
         gc.collect()
         out[0, 0] = self.upper_mag
-        out[1, 0] = sumE1_2 - sumE1_1
-        out[2, 0] = (sumE1_1 + sumE1_2) / 2.0
-        out[3, 0] = (sumR1_1 + sumR1_2) / 2.0
-        fitsio.write(os.path.join(self.outdir, "%04d.fits" %ind0), out)
+        out[1, 0] = sum_e1_2 - sum_e1_1
+        out[2, 0] = (sum_e1_1 + sum_e1_2) / 2.0
+        out[3, 0] = (sum_r1_1 + sum_r1_2) / 2.0
+        fitsio.write(os.path.join(self.outdir, "%04d.fits" % ind0), out)
         return out
 
 
@@ -153,12 +154,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-
     pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
     cparser = ConfigParser()
     cparser.read(args.config)
     shear_value = cparser.getfloat("distortion", "shear_value")
-    gver =  cparser.get("distortion", "g_test")
+    gver = cparser.get("distortion", "g_test")
     print("Testing for %s . " % gver)
     worker = Worker(args.config, gver=gver)
     refs = list(range(args.minId, args.maxId))
