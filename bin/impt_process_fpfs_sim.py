@@ -43,10 +43,11 @@ class Worker(object):
 
         # setup processor
         self.indir = cparser.get("procsim", "input_dir")
-        self.simname = cparser.get("procsim", "sim_name")
-        self.rcut = cparser.getint("FPFS", "rcut")
-        self.outdir = "summary2_output"
+        self.outdir = cparser.get("procsim", "output_dir")
         os.makedirs(self.outdir, exist_ok=True)
+        self.simname = cparser.get("procsim", "sim_name")
+
+        self.rcut = cparser.getint("FPFS", "rcut")
 
         # This task change the cut on one observable and see how the biases changes.
         # Here is  the observable used for test
@@ -66,8 +67,8 @@ class Worker(object):
             Const=20,
             lower_m00=self.lower_m00,
             sigma_m00=0.2,
-            lower_r2=0.05,
-            upper_r2=1.5,
+            lower_r2=0.03,
+            upper_r2=2.0,
             sigma_r2=0.2,
             sigma_v=0.2,
         )
