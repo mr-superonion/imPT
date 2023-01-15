@@ -104,7 +104,8 @@ class Worker(object):
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
-        assert os.path.isfile(in_nm1) & os.path.isfile(in_nm2
+        assert os.path.isfile(in_nm1) & os.path.isfile(
+            in_nm2
         ), "Cannot find input galaxy shear catalogs : %s , %s" % (in_nm1, in_nm2)
         mm1 = impt.fpfs.read_catalog(in_nm1)
         mm2 = impt.fpfs.read_catalog(in_nm2)
