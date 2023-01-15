@@ -1,6 +1,11 @@
 # Overview
 
-FPFS is an open-source software for fast and accurate shear estimation.
+imPT is an open-source software for fast and accurate perturbation estimation
+on images.
+
++ The code implements [FPFS](https://github.com/mr-superonion/FPFS) algorithm
+  with auto-differentiation in jax;
++ TBD
 
 ## Basic installation
 
