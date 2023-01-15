@@ -1,6 +1,9 @@
 # Examples
 
-## Basic Tests
+## notebook examples
 
-This [notebook](./1_unit_tests.ipynb) summarizes all the unit tests for the
-lensPT pipeline.
+See [here](./notebooks/README.md) for examples in jupyter notebooks.
+
+## command-line examples
+
+See [here](./command_lines/README.md) for examples in jupyter notebooks.
