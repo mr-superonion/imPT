@@ -33,6 +33,7 @@ class Worker(object):
     def __init__(self, config_name, gver="g1"):
         cparser = ConfigParser()
         cparser.read(config_name)
+        self.shear_value = cparser.getfloat("distortion", "shear_value")
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
         cov_fname = os.path.join(
@@ -43,11 +44,10 @@ class Worker(object):
         # setup processor
         self.indir = cparser.get("procsim", "input_dir")
         self.outdir = cparser.get("procsim", "output_dir")
-        os.makedirs(self.outdir, exist_ok=True)
         self.simname = cparser.get("procsim", "sim_name")
+        os.makedirs(self.outdir, exist_ok=True)
 
         self.rcut = cparser.getint("FPFS", "rcut")
-
         # This task change the cut on one observable and see how the biases changes.
         # Here is  the observable used for test
         self.upper_mag = cparser.getfloat("FPFS", "cut_mag")
@@ -93,6 +93,16 @@ class Worker(object):
         gc.collect()
         return e1_sum, r1_sum
 
+    def get_sum_e_r(self, in_nm):
+        assert os.path.isfile(
+            in_nm
+        ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
+        gc.collect()
+        mm = impt.fpfs.read_catalog(in_nm)
+        sum_e1, sum_r1 = self.measure(mm)
+        del mm
+        return sum_e1, sum_r1
+
     def run(self, ind0):
         out_nm = os.path.join(self.outdir, "%04d.fits" % ind0)
         if os.path.isfile(out_nm):
@@ -104,25 +114,35 @@ class Worker(object):
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
-        assert os.path.isfile(in_nm1) & os.path.isfile(
-            in_nm2
-        ), "Cannot find input galaxy shear catalogs : %s , %s" % (in_nm1, in_nm2)
-        mm1 = impt.fpfs.read_catalog(in_nm1)
-        mm2 = impt.fpfs.read_catalog(in_nm2)
-
+        sum_e1_1, sum_r1_1 = self.get_sum_e_r(in_nm1)
+        sum_e1_2, sum_r1_2 = self.get_sum_e_r(in_nm2)
+        out = np.zeros((4, 1))
         # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
         # ('res','<f8')]
-        out = np.zeros((4, 1))
-        sum_e1_1, sum_r1_1 = self.measure(mm1)
-        sum_e1_2, sum_r1_2 = self.measure(mm2)
-        del mm1, mm2
-        gc.collect()
         out[0, 0] = self.upper_mag
         out[1, 0] = sum_e1_2 - sum_e1_1
         out[2, 0] = (sum_e1_1 + sum_e1_2) / 2.0
         out[3, 0] = (sum_r1_1 + sum_r1_2) / 2.0
         fitsio.write(out_nm, out)
         return out
+
+    def summarize_mc_bias(self, outs):
+        nsims = outs.shape[0]
+        # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
+        # ('res','<f8')]
+        res = np.average(outs, axis=0)
+        err = np.std(outs, axis=0)
+        mbias = (res[1] / res[3] / 2.0 - self.shear_value) / self.shear_value
+        merr = (err[1] / res[3] / 2.0) / self.shear_value / np.sqrt(nsims)
+        cbias = res[2] / res[3]
+        cerr = err[2] / res[3] / np.sqrt(nsims)
+
+        print("Separate galaxies into %d bins: %s" % (len(res[0]), res[0]))
+        print("Multiplicative biases for those bins are: ", mbias)
+        print("Errors are: ", merr)
+        print("Additive biases for those bins are: ", cbias)
+        print("Errors are: ", cerr)
+        return
 
 
 if __name__ == "__main__":
@@ -150,7 +170,6 @@ if __name__ == "__main__":
     pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
     cparser = ConfigParser()
     cparser.read(args.config)
-    shear_value = cparser.getfloat("distortion", "shear_value")
     gver = cparser.get("distortion", "g_test")
     print("Testing for %s . " % gver)
     worker = Worker(args.config, gver=gver)
@@ -158,22 +177,7 @@ if __name__ == "__main__":
     outs = []
     for r in pool.map(worker.run, refs):
         outs.append(r)
-
     outs = np.stack(outs)
-    nsims = outs.shape[0]
-    # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
-    # ('res','<f8')]
-    res = np.average(outs, axis=0)
-    err = np.std(outs, axis=0)
-    mbias = (res[1] / res[3] / 2.0 - shear_value) / shear_value
-    merr = (err[1] / res[3] / 2.0) / shear_value / np.sqrt(nsims)
-    cbias = res[2] / res[3]
-    cerr = err[2] / res[3] / np.sqrt(nsims)
-
-    print("Separate galaxies into %d bins: %s" % (len(res[0]), res[0]))
-    print("Multiplicative biases for those bins are: ", mbias)
-    print("Errors are: ", merr)
-    print("Additive biases for those bins are: ", cbias)
-    print("Errors are: ", cerr)
+    worker.summarize_mc_bias(outs)
     del worker
     pool.close()
