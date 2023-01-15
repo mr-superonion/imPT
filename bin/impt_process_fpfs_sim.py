@@ -15,12 +15,14 @@
 #
 import gc
 import os
+import jax
 import impt
 import fitsio
 import schwimmbad
 import numpy as np
 import pandas as pd
 import jax.numpy as jnp
+from functools import partial
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -57,6 +59,7 @@ class Worker(object):
         self.gver = gver
         return
 
+    @partial(jax.jit, static_argnums=(0,))
     def measure(self, data):
         params = impt.fpfs.FpfsParams(
                 Const = 20,
