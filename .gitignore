@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 output
 *output*
+xsmall*
+xtiny*
+xmini*
