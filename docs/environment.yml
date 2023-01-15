@@ -9,3 +9,7 @@ dependencies:
   - schwimmbad
   - pytest
   - flake8
+  - sphinx
+  - myst-nb
+  - sphinx-copybutton
+    sphinx-book-theme
