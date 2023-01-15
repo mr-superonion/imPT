@@ -12,6 +12,7 @@ with open(fname, "r") as ff:
 
 scripts = [
     "bin/impt_config",
+    "bin/impt_process_fpfs_sim.py",
 ]
 
 setup(

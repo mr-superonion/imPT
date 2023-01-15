@@ -13,13 +13,19 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+import gc
 import os
+import impt
+import fitsio
 import schwimmbad
 import numpy as np
 import pandas as pd
-import astropy.io.fits as pyfits
+import jax.numpy as jnp
+
 from argparse import ArgumentParser
 from configparser import ConfigParser
+
+os.environ["JAX_PLATFORM_NAME"] = "cpu"
 
 
 class Worker(object):
@@ -28,29 +34,68 @@ class Worker(object):
         cparser.read(config_name)
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
+        cov_fname = os.path.join(impt.fpfs.__data_dir__, "modes_cov_mat_paper3_045.fits")
+        self.cov_mat = jnp.array(fitsio.read(cov_fname))
 
         # setup processor
-        self.catdir = cparser.get("procsim", "cat_dir")
+        self.indir = cparser.get("procsim", "input_dir")
         self.simname = cparser.get("procsim", "sim_name")
-        proc_name = cparser.get("procsim", "proc_name")
-        self.do_noirev = cparser.getboolean("FPFS", "do_noirev")
         self.rcut = cparser.getint("FPFS", "rcut")
+        self.outdir = "summary2_output"
+        os.makedirs(self.outdir, exist_ok=True)
 
         # This task change the cut on one observable and see how the biases changes.
         # Here is  the observable used for test
-        self.test_name = cparser.get("FPFS", "test_name")
-        self.cutB = cparser.getfloat("FPFS", "cutB")
-        self.dcut = cparser.getfloat("FPFS", "dcut")
-        self.ncut = cparser.getint("FPFS", "ncut")
+        self.ncut = 1
+        self.upper_mag = cparser.getfloat("FPFS", "cutB")
+        self.lower_m00 = 10 ** ((self.magz - self.upper_mag) / 2.5)
 
-        self.indir = os.path.join(self.catdir, "src_%s_%s" % (self.simname, proc_name))
         if not os.path.exists(self.indir):
             raise FileNotFoundError("Cannot find input directory: %s!" % self.indir)
         print("The input directory for galaxy shear catalogs is %s. " % self.indir)
         # setup WL distortion parameter
         self.gver = gver
-        self.Const = cparser.getfloat("FPFS", "weighting_c")
         return
+
+    def measure(self, data):
+        params = impt.fpfs.FpfsParams(
+                Const = 20,
+                lower_m00=self.lower_m00,
+                sigma_m00=0.2,
+                lower_r2=0.05,
+                upper_r2=1.5,
+                sigma_r2=0.2,
+                sigma_v=0.2,
+            )
+        funcnm = "ts2"
+        e1_impt = impt.fpfs.FpfsE1(params, func_name=funcnm)
+        w_det = impt.fpfs.FpfsWeightDetect(params, func_name=funcnm)
+        w_sel = impt.fpfs.FpfsWeightSelect(params, func_name=funcnm)
+
+        # ellipticity
+        e1 = e1_impt*w_sel*w_det
+        enoise = impt.BiasNoise(e1, self.cov_mat)
+        tmp = e1.evaluate(data)
+        e1_sum = jnp.sum(tmp)
+        del tmp
+        gc.collect()
+        tmp = enoise.evaluate(data)
+        e1_sum = e1_sum - jnp.sum(tmp)
+        del enoise, tmp
+        gc.collect()
+
+        # shear response
+        res1 = impt.RespG1(e1)
+        rnoise = impt.BiasNoise(res1, self.cov_mat)
+        tmp = res1.evaluate(data)
+        r1_sum = jnp.sum(tmp)
+        del tmp
+        gc.collect()
+        tmp = rnoise.evaluate(data)
+        r1_sum = r1_sum - jnp.sum(tmp)
+        del res1, rnoise, e1, tmp
+        gc.collect()
+        return e1_sum, r1_sum
 
     def run(self, ind0):
         pp = "cut%d" % self.rcut
@@ -61,22 +106,26 @@ class Worker(object):
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
         assert os.path.isfile(in_nm1) & os.path.isfile(in_nm2), (
-            "Cannot find\
-                input galaxy shear catalog distorted by positive and negative shear\
-                : %s , %s"
+            "Cannot find input galaxy shear catalogs : %s , %s"
             % (in_nm1, in_nm2)
         )
+        mm1 = impt.fpfs.read_catalog(in_nm1)
+        mm2 = impt.fpfs.read_catalog(in_nm2)
+        gc.collect()
 
-        # names= [('cut','<f8'), ('de','<f8'), ('eA1','<f8'), ('eA2','<f8'),
-        # ('res1','<f8'), ('res2','<f8')]
-        out = np.zeros((6, self.ncut))
-        for i in range(self.ncut):
-            pass
+        # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
+        # ('res','<f8')]
+        out = np.zeros((4, self.ncut))
+        sumE1_1, sumR1_1 = self.measure(mm1)
+        sumE1_2, sumR1_2 = self.measure(mm2)
+        del mm1, mm2
+        gc.collect()
+        out[0, 0] = self.upper_mag
+        out[1, 0] = sumE1_2 - sumE1_1
+        out[2, 0] = (sumE1_1 + sumE1_2) / 2.0
+        out[3, 0] = (sumR1_1 + sumR1_2) / 2.0
+        fitsio.write(os.path.join(self.outdir, "%04d.fits" %ind0), out)
         return out
-
-    def __call__(self, ind0):
-        print("start ID: %d" % (ind0))
-        return self.run(ind0)
 
 
 if __name__ == "__main__":
@@ -100,67 +149,59 @@ if __name__ == "__main__":
         "--mpi", dest="mpi", default=False, action="store_true", help="Run with MPI."
     )
     args = parser.parse_args()
-    pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
 
+
+    pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
     cparser = ConfigParser()
     cparser.read(args.config)
-    glist = []
-    if cparser.getboolean("distortion", "test_g1"):
-        glist.append("g1")
-    if cparser.getboolean("distortion", "test_g2"):
-        glist.append("g2")
-    if len(glist) < 1:
-        raise ValueError("Cannot test nothing!! Must test g1 or test g2. ")
     shear_value = cparser.getfloat("distortion", "shear_value")
+    gver =  cparser.get("distortion", "g_test")
+    print("Testing for %s . " % gver)
+    worker = Worker(args.config, gver=gver)
+    refs = list(range(args.minId, args.maxId))
+    outs = []
+    for r in pool.map(worker.run, refs):
+        outs.append(r)
+    outs = np.stack(outs)
+    nsims = outs.shape[0]
+    fitsio.write(
+        os.path.join(
+            worker.outdir,
+            "bin_m00_sim_%s.fits" % (worker.simname),
+        ),
+        outs,
+    )
 
-    for gver in glist:
-        print("Testing for %s . " % gver)
-        worker = Worker(args.config, gver=gver)
-        refs = list(range(args.minId, args.maxId))
-        outs = []
-        for r in pool.map(worker, refs):
-            outs.append(r)
-        outs = np.stack(outs)
-        nsims = outs.shape[0]
-        summary_dirname = "summary_output"
-        os.makedirs(summary_dirname, exist_ok=True)
-        pyfits.writeto(
-            os.path.join(
-                summary_dirname,
-                "bin_%s_sim_%s.fits" % (worker.test_name, worker.simname),
-            ),
-            outs,
-            overwrite=True,
-        )
+    # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8')
+    # ('res','<f8')]
+    res = np.average(outs, axis=0)
+    err = np.std(outs, axis=0)
+    mbias = (res[1] / res[3] / 2.0 - shear_value) / shear_value
+    merr = (err[1] / res[3] / 2.0) / shear_value / np.sqrt(nsims)
+    cbias = res[2] / res[3]
+    cerr = err[2] / res[3] / np.sqrt(nsims)
+    df = pd.DataFrame(
+        {
+            "simname": worker.simname.split("galaxy_")[-1],
+            "binave": res[0],
+            "mbias": mbias,
+            "merr": merr,
+            "cbias": cbias,
+            "cerr": cerr,
+        }
+    )
+    df.to_csv(
+        os.path.join(
+            worker.outdir,
+            "bin_m00_sim_%s.csv" % (worker.simname),
+        ),
+        index=False,
+    )
 
-        res = np.average(outs, axis=0)
-        err = np.std(outs, axis=0)
-        mbias = (res[1] / res[5] / 2.0 - shear_value) / shear_value
-        merr = (err[1] / res[5] / 2.0) / shear_value / np.sqrt(nsims)
-        cbias = res[3] / res[5]
-        cerr = err[3] / res[5] / np.sqrt(nsims)
-        df = pd.DataFrame(
-            {
-                "simname": worker.simname.split("galaxy_")[-1],
-                "binave": res[0],
-                "mbias": mbias,
-                "merr": merr,
-                "cbias": cbias,
-                "cerr": cerr,
-            }
-        )
-        df.to_csv(
-            os.path.join(
-                summary_dirname,
-                "bin_%s_sim_%s.csv" % (worker.test_name, worker.simname),
-            ),
-            index=False,
-        )
-
-        print("Separate galaxies into %d bins: %s" % (len(res[0]), res[0]))
-        print("Multiplicative biases for those bins are: ", mbias)
-        print("Errors are: ", merr)
-        print("Additive biases for those bins are: ", cbias)
-        print("Errors are: ", cerr)
-        del worker
+    print("Separate galaxies into %d bins: %s" % (len(res[0]), res[0]))
+    print("Multiplicative biases for those bins are: ", mbias)
+    print("Errors are: ", merr)
+    print("Additive biases for those bins are: ", cbias)
+    print("Errors are: ", cerr)
+    del worker
     pool.close()
