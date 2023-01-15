@@ -1,0 +1,11 @@
+name: b2
+channels:
+  - conda-forge
+dependencies:
+  -python=3.9
+  -fitsio
+  -numpy
+  -jax
+  -schwimmbad
+  -pytest
+  -flake8

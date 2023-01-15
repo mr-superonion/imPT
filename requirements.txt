@@ -2,7 +2,6 @@ astropy
 fitsio
 flake8
 jax
-numpy<1.23
+numpy
 pytest
 schwimmbad
-scipy

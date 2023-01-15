@@ -23,7 +23,7 @@ setup(
     author_email="mr.superonion@hotmail.com",
     python_requires=">=3.8",
     install_requires=[
-        "numpy<1.23",
+        "numpy",
         "schwimmbad",
         "jax",
         "flax",
