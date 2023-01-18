@@ -199,7 +199,7 @@ class FpfsWeightE1(FpfsObsBase):
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2

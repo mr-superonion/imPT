@@ -67,11 +67,11 @@ class Worker(object):
             lower_m00=self.lower_m00,
             sigma_m00=0.2,
             lower_r2=self.lower_r2,
-            upper_r2=2.0,
-            sigma_r2=0.2,
+            upper_r2=200.0,
+            sigma_r2=0.4,
             sigma_v=0.2,
         )
-        funcnm = "ts2"
+        funcnm = "ss2"
         e1_impt = impt.fpfs.FpfsE1(params, func_name=funcnm)
         w_det = impt.fpfs.FpfsWeightDetect(params, func_name=funcnm)
         w_sel = impt.fpfs.FpfsWeightSelect(params, func_name=funcnm)
@@ -111,10 +111,12 @@ class Worker(object):
             return
         self.prepare_functions()
         pp = "cut%d" % self.rcut
+
         in_nm1 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
         )
         sum_e1_1, sum_r1_1 = self.get_sum_e_r(in_nm1)
+
         in_nm2 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
         )
