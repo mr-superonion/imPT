@@ -44,7 +44,7 @@ class NlBase:
         self.parent = parent
         if lin_resp is not None:
             if not isinstance(lin_resp, LinRespBase):
-                raise ValueError("Input lin_resp is not a instance of NlBase")
+                raise ValueError("Input lin_resp is not a instance of LinRespBase")
         self.lin_resp = lin_resp
         if not isinstance(params, struct.PyTreeNode):
             raise ValueError("Input parameter is not a instance of pyTreeNode")
