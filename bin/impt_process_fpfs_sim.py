@@ -16,6 +16,7 @@
 import os
 import gc
 import impt
+import time
 import fitsio
 import schwimmbad
 import numpy as np
@@ -90,6 +91,7 @@ class Worker(object):
             in_nm
         ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
         mm = impt.fpfs.read_catalog(in_nm)
+        print("number of galaxies: %d" % len(mm))
         e1_sum = jnp.sum(e1.evaluate(mm))
         e1_sum = e1_sum - jnp.sum(enoise.evaluate(mm))
 
@@ -104,9 +106,10 @@ class Worker(object):
         if os.path.isfile(out_nm):
             print("Already has the output file")
             return
+
+        start_time = time.time()
         e1, enoise, res1, rnoise = self.prepare_functions()
         pp = "cut%d" % self.rcut
-
         in_nm1 = os.path.join(
             self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
         )
@@ -119,6 +122,7 @@ class Worker(object):
         sum_e1_2, sum_r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
         del e1, enoise, res1, rnoise
         gc.collect()
+        print("--- computational time: %.2f seconds ---" % (time.time() - start_time))
 
         out = np.zeros((4, 1))
         # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8') ('res','<f8')]
