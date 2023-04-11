@@ -180,6 +180,37 @@ class FpfsE2(FpfsObsBase):
         return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
 
 
+class FpfsE41(FpfsObsBase):
+    """FPFS ellipticity (first component)"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        return cat[did["m42c"]] / (cat[did["m00"]] + self.params.Const)
+
+
+class FpfsE42(FpfsObsBase):
+    """FPFS ellipticity (second component)"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 31
+        super().__init__(
+            params=params,
+            parent=parent,
+            func_name=func_name,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        return cat[did["m42s"]] / (cat[did["m00"]] + self.params.Const)
+
+
 class FpfsWeightE1(FpfsObsBase):
     """FPFS selection weight"""
 
