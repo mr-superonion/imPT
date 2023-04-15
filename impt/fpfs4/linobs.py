@@ -60,7 +60,7 @@ class FpfsLinResponse(LinRespBase):
         # here (But if you are interested in playing with shear response of
         # this term, please contact me.)
         fpfs_m40 = jnp.zeros_like(row[did["m40"]])  # fix this to 0
-        fpfs_m42c = jnp.sqrt(6.0) / 2 * (row[did["m20"] - row[did["m60"]]])
+        fpfs_m42c = jnp.sqrt(6.0) / 2 * (row[did["m20"]] - row[did["m60"]])
         fpfs_m42s = jnp.zeros_like(row[did["m42s"]])
         fpfs_m60 = jnp.zeros_like(row[did["m42c"]])
         out = jnp.stack(
@@ -100,7 +100,7 @@ class FpfsLinResponse(LinRespBase):
         # this term, please contact me.)
         fpfs_m40 = jnp.zeros_like(row[did["m40"]])
         fpfs_m42c = jnp.zeros_like(row[did["m42c"]])
-        fpfs_m42s = jnp.sqrt(6.0) / 2 * (row[did["m20"] - row[did["m60"]]])
+        fpfs_m42s = jnp.sqrt(6.0) / 2 * (row[did["m20"]] - row[did["m60"]])
         fpfs_m60 = jnp.zeros_like(row[did["m42c"]])
         out = jnp.stack(
             [
