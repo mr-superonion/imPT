@@ -203,15 +203,20 @@ class FpfsWeightE1(FpfsObsBase):
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
+        # M00 ( 1 - lower_r2_lower) + M20 > 0
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
         w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
         for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
+
         e1 = cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e1
 
@@ -234,6 +239,7 @@ class FpfsWeightE2(FpfsObsBase):
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
+        # M00 ( 1 - lower_r2_lower) + M20 > 0
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
         w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
 
@@ -245,8 +251,11 @@ class FpfsWeightE2(FpfsObsBase):
 
         wdet = 1.0
         for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
         e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e2

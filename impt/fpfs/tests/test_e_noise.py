@@ -33,8 +33,8 @@ test_fname = os.path.join(
 data = fitsio.read(test_fname)
 ndata = len(data)
 
-ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=wconst, noirev=False)
-ell_fpfs_corr = fpfs.catalog.fpfs_m2e(data, const=wconst, noirev=True)
+ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=wconst, nn=None)
+ell_fpfs_corr = fpfs.catalog.fpfs_m2e(data, const=wconst, nn=data)
 noicorr_fpfs_e1 = ell_fpfs["fpfs_e1"] - ell_fpfs_corr["fpfs_e1"]
 noicorr_fpfs_e2 = ell_fpfs["fpfs_e2"] - ell_fpfs_corr["fpfs_e2"]
 noicorr_fpfs_de1dg1 = ell_fpfs["fpfs_R1E"] - ell_fpfs_corr["fpfs_R1E"]

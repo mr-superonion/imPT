@@ -39,7 +39,7 @@ def test_flux():
     w_sel = impt.fpfs.FpfsWeightSelect(params)
     e1_impt = impt.fpfs.FpfsE1(params)
     e2_impt = impt.fpfs.FpfsE2(params)
-    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, noirev=False)
+    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, nn=None)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False)
     selnm = np.array(["M00"])
     fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
@@ -74,7 +74,7 @@ def test_R2():
     e1_impt = impt.fpfs.FpfsE1(params)
     e2_impt = impt.fpfs.FpfsE2(params)
     w_sel = impt.fpfs.FpfsWeightSelect(params)
-    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, noirev=False)
+    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, nn=None)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False)
     selnm = np.array(["R2"])
     fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
@@ -113,7 +113,7 @@ def test_peak():
     e1_impt = impt.fpfs.FpfsE1(params)
     e2_impt = impt.fpfs.FpfsE2(params)
     w_det = impt.fpfs.FpfsWeightDetect(params)
-    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, noirev=False)
+    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, nn=None)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False)
     selnm = np.array(["detect2"])
     fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
@@ -158,7 +158,7 @@ def test_all():
     we2 = e2_impt * w_det * w_sel
 
     # evaluate fpfs
-    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, noirev=False)
+    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, nn=None)
     fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False)
     selnm = np.array(["detect2", "M00", "R2"])
     fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
