@@ -14,7 +14,7 @@
 # python lib
 
 from flax import struct
-from jax import lax, jit, grad, hessian
+from jax import lax, jit, grad, jacfwd, jacrev
 
 
 class LinRespBase:
@@ -58,7 +58,13 @@ class NlBase:
         """Setup observable functions [func, derivative and Hessian]"""
         self._obs_func = jit(func)
         self._obs_grad_func = jit(grad(self._obs_func, argnums=self.nmodes))
-        self._obs_hessian_func = jit(hessian(self._obs_func, argnums=self.nmodes))
+        self._obs_hessian_func = jit(
+            jacfwd(
+                jacrev(
+                    self._obs_func,
+                )
+            )
+        )
         return
 
     def evaluate(self, cat):
