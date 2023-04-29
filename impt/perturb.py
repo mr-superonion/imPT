@@ -19,8 +19,6 @@
 from jax import jit
 import jax.numpy as jnp
 from functools import partial
-from jax import block_until_ready
-
 from .base import NlBase
 
 __all__ = ["RespG1", "RespG2", "BiasNoise"]
@@ -55,7 +53,6 @@ class RespG1(NlBase):
             self.parent._obs_grad_func(x),
             self.lin_resp._dg1(x),
         )
-        res = block_until_ready(res)
         return res
 
 
@@ -81,7 +78,6 @@ class RespG2(NlBase):
             self.parent._obs_grad_func(x),
             self.lin_resp._dg2(x),
         )
-        res = block_until_ready(res)
         return res
 
 
@@ -119,5 +115,4 @@ class BiasNoise(NlBase):
             )
             / 2.0
         )
-        res = block_until_ready(res)
         return res

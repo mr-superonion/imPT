@@ -183,8 +183,49 @@ def test_all():
     return
 
 
+def test_all2():
+    print("testing final selection weight")
+    # evaluate impt.fpfs
+    params = impt.fpfs.FpfsParams(
+        lower_m00=3.5,
+        lower_r2=0.03,
+        lower_v=0.3,
+        sigma_m00=2.0,
+        sigma_r2=2.0,
+        sigma_v=1.5,
+    )
+    we1 = impt.fpfs.FpfsWeightE1(params)
+    we2 = impt.fpfs.FpfsWeightE2(params)
+
+    # evaluate fpfs
+    ell_fpfs = fpfs.catalog.fpfs_m2e(data, const=params.Const, nn=None)
+    fs = fpfs.catalog.summary_stats(data, ell_fpfs, use_sig=False)
+    selnm = np.array(["detect", "M00", "R2"])
+    fs = impt.fpfs.test_utils.initialize_FPFS(fs, selnm, params)
+
+    np.testing.assert_array_almost_equal(
+        fs.sumE1,
+        jnp.sum(we1.evaluate(cat)),
+    )
+    np.testing.assert_array_almost_equal(
+        fs.sumE2,
+        jnp.sum(we2.evaluate(cat)),
+    )
+    print("     testing shear response")
+    dwe1_dg1 = impt.RespG1(we1)
+    dwe2_dg2 = impt.RespG2(we2)
+    res_ad = jnp.sum(dwe1_dg1.evaluate(cat)) + jnp.sum(dwe2_dg2.evaluate(cat))
+    res_fpfs = fs.corR1 + fs.sumR1 + fs.corR2 + fs.sumR2
+    np.testing.assert_array_almost_equal(
+        res_ad,
+        res_fpfs,
+    )
+    return
+
+
 if __name__ == "__main__":
     test_flux()
     test_R2()
     test_peak()
     test_all()
+    test_all2()
