@@ -227,8 +227,9 @@ class FpfsWeightE1(FpfsObsBase):
 class FpfsWeightE2(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, func_name="ts2"):
+    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
         self.nmodes = 31
+        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -254,7 +255,7 @@ class FpfsWeightE2(FpfsObsBase):
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
-        for i in range(npeak):
+        for i in range(0, npeak, self.skip):
             # v_i > lower_v
             wdet = wdet * self.ufunc(
                 cat[did["v%d" % i]],
