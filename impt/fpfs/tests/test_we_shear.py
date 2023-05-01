@@ -190,6 +190,7 @@ def test_all2():
         lower_m00=3.5,
         lower_r2=0.03,
         lower_v=0.3,
+        upper_r2=1000.0,
         sigma_m00=2.0,
         sigma_r2=2.0,
         sigma_v=1.5,

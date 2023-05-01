@@ -199,10 +199,9 @@ class FpfsWeightE1(FpfsObsBase):
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        # M00 ( 1 - lower_r2_lower) + M20 > 0
-        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
-        w2u = 1.0
+        # M00 ( 1 - lower_r2_lower) + M20 < 0
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
@@ -243,9 +242,8 @@ class FpfsWeightE2(FpfsObsBase):
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
-        w2u = 1.0
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
