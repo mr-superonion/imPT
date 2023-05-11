@@ -19,7 +19,6 @@
 from jax import jit
 import jax.numpy as jnp
 from functools import partial
-
 from .base import NlBase
 
 __all__ = ["RespG1", "RespG2", "BiasNoise"]

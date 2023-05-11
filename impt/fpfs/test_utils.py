@@ -11,7 +11,7 @@ def initialize_FPFS(fs, snlist, params):
     cutsig = []
     cut = []
     for sn in snlist:
-        if sn == "detect2":
+        if sn == "detect" or sn == "detect2":
             cutsig.append(params.sigma_v)
             cut.append(params.lower_v)
         elif sn == "M00":

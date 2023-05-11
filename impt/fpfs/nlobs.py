@@ -116,12 +116,12 @@ class FpfsWeightSelect(FpfsObsBase):
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
         # w2l = 1.
         # w2u = 1.
         out = w0 * w2l * w2u
@@ -131,8 +131,9 @@ class FpfsWeightSelect(FpfsObsBase):
 class FpfsWeightDetect(FpfsObsBase):
     """FPFS detection weight"""
 
-    def __init__(self, params, parent=None, func_name="ts2"):
+    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
         self.nmodes = 31
+        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -142,7 +143,7 @@ class FpfsWeightDetect(FpfsObsBase):
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         out = 1.0
-        for i in range(npeak):
+        for i in range(0, npeak, self.skip):
             # v_i - M00 * lower_v > sigma_v
             vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
             out = out * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
@@ -183,8 +184,9 @@ class FpfsE2(FpfsObsBase):
 class FpfsWeightE1(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, func_name="ts2"):
+    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
         self.nmodes = 31
+        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -203,15 +205,21 @@ class FpfsWeightE1(FpfsObsBase):
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        # M00 ( 1 - lower_r2_lower) + M20 > 0
+        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = 1.0
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
-        for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+        for i in range(0, npeak, self.skip):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
+
         e1 = cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e1
 
@@ -219,8 +227,9 @@ class FpfsWeightE1(FpfsObsBase):
 class FpfsWeightE2(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, func_name="ts2"):
+    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
         self.nmodes = 31
+        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -234,19 +243,24 @@ class FpfsWeightE2(FpfsObsBase):
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
+        # M00 ( 1 - lower_r2_lower) + M20 > 0
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
+        w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        w2u = 1.0
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
-        for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+        for i in range(0, npeak, self.skip):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
         e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e2

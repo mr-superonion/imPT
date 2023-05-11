@@ -96,7 +96,7 @@ def smfunc(x, mu, sigma):
 
 @jit
 def ssfunc2(x, mu, sigma):
-    """Returns the C3 smooth step weight funciton
+    """Returns the C2 smooth step weight funciton
 
     Args:
         x (ndarray):    input data vector
