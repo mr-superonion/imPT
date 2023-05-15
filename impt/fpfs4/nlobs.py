@@ -17,6 +17,7 @@ from functools import partial
 
 import jax.numpy as jnp
 from flax import struct
+
 # This file contains modules for nonlinear observables measured from images
 from jax import jit
 
@@ -34,6 +35,8 @@ __all__ = [
     "FpfsWeightDetect",
     "FpfsWeightE1",
     "FpfsWeightE2",
+    "FpfsWeightE41",
+    "FpfsWeightE42",
 ]
 
 """
