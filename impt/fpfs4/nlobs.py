@@ -31,6 +31,8 @@ __all__ = [
     "FpfsParams",
     "FpfsE1",
     "FpfsE2",
+    "FpfsE41",
+    "FpfsE42",
     "FpfsWeightSelect",
     "FpfsWeightDetect",
     "FpfsWeightE1",
@@ -188,7 +190,7 @@ class FpfsE41(FpfsObsBase):
     """FPFS ellipticity (first component)"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
+        self.nmodes = 32
         super().__init__(
             params=params,
             parent=parent,
@@ -203,7 +205,7 @@ class FpfsE42(FpfsObsBase):
     """FPFS ellipticity (second component)"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
+        self.nmodes = 32
         super().__init__(
             params=params,
             parent=parent,
@@ -291,7 +293,7 @@ class FpfsWeightE41(FpfsObsBase):
     """FPFS selection weight"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
+        self.nmodes = 32
         super().__init__(
             params=params,
             parent=parent,
@@ -327,7 +329,7 @@ class FpfsWeightE42(FpfsObsBase):
     """FPFS selection weight"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
+        self.nmodes = 32
         super().__init__(
             params=params,
             parent=parent,
