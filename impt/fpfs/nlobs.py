@@ -15,9 +15,10 @@
 
 # This file contains modules for nonlinear observables measured from images
 from jax import jit
+from functools import partial
+
 from flax import struct
 import jax.numpy as jnp
-from functools import partial
 from .default import npeak
 
 from .default import indexes as did
@@ -108,7 +109,7 @@ class FpfsWeightSelect(FpfsObsBase):
             func_name=func_name,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
@@ -140,7 +141,7 @@ class FpfsWeightDetect(FpfsObsBase):
             func_name=func_name,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         out = 1.0
         for i in range(0, npeak, self.skip):
@@ -160,7 +161,7 @@ class FpfsE1(FpfsObsBase):
             parent=parent,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
 
@@ -176,7 +177,7 @@ class FpfsE2(FpfsObsBase):
             func_name=func_name,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
 
@@ -193,7 +194,7 @@ class FpfsWeightE1(FpfsObsBase):
             func_name=func_name,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
@@ -236,7 +237,7 @@ class FpfsWeightE2(FpfsObsBase):
             func_name=func_name,
         )
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
