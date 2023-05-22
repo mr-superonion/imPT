@@ -191,10 +191,7 @@ class FpfsE41(FpfsObsBase):
 
     def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 32
-        super().__init__(
-            params=params,
-            parent=parent,
-        )
+        super().__init__(params=params, parent=parent, func_name=func_name)
 
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
@@ -317,10 +314,13 @@ class FpfsWeightE41(FpfsObsBase):
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
-        for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+        for i in range(0, npeak):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
         e1 = cat[did["m42c"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e1
 
@@ -353,9 +353,12 @@ class FpfsWeightE42(FpfsObsBase):
         wsel = w0 * w2l * w2u
 
         wdet = 1.0
-        for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+        for i in range(0, npeak):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
         e2 = cat[did["m42s"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e2
