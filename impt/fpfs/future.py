@@ -131,7 +131,7 @@ class FpfsExtE1(FpfsObsBase):
             )
 
         # ellipticity
-        denom = self.params.A * cat[did["m00"]] ** self.params.alpha \
+        denom = cat[did["m00"]] ** self.params.alpha \
             + self.params.B * cat[did["m20"]] ** self.params.beta \
             + self.params.C
         e1 = cat[did["m22c"]] / denom

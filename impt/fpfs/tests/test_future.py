@@ -19,9 +19,10 @@ import impt
 import galsim
 import numpy as np
 import jax.numpy as jnp
+import impt.fpfs.future as future
 
 test_thres = 1e-4
-params = impt.fpfs.FpfsParams(
+params = future.FpfsExtParams(
     lower_m00=0.0,
     lower_r2=0.0,
     lower_v=-10.0,  # cannot test detection with 4 galaxies; need 6 galaxies
@@ -83,9 +84,11 @@ def do_test(scale, ind0, rcut):
     assert np.all(coords2 == coords)
     cat = fpfs_task.measure(gal_data, coords2)
 
-    e1 = impt.fpfs.FpfsWeightE1(params)
+    e1 = future.FpfsExtE1(params)
     dg1 = impt.RespG1(e1)
     shear = jnp.sum(e1.evaluate(cat)) / jnp.sum(dg1.evaluate(cat))
+    print(shear)
+    print(np.abs(shear + 0.02))
     assert np.all(np.abs(shear + 0.02) < test_thres)
     return
 
