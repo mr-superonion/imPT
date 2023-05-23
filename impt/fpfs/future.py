@@ -45,8 +45,8 @@ class FpfsExtParams(struct.PyTreeNode):
     # Exting parameter
     B: float = struct.field(pytree_node=True, default=1.0)
     C: float = struct.field(pytree_node=True, default=10.0)
-    alpha: float = struct.field(pytree_node=True, default=1.0)
-    beta: float = struct.field(pytree_node=True, default=1.0)
+    alpha: float = struct.field(pytree_node=True, default=1.3)
+    beta: float = struct.field(pytree_node=True, default=1.2)
 
     # flux selection
     # cut on magntidue
@@ -132,8 +132,8 @@ class FpfsExtE1(FpfsObsBase):
 
         # ellipticity
         denom = cat[did["m00"]] ** self.params.alpha \
-            + self.params.B * cat[did["m20"]] ** self.params.beta \
-            + self.params.C
+            + self.params.B * (cat[did["m00"]] + cat[did["m20"]]) \
+            ** self.params.beta + self.params.C
         e1 = cat[did["m22c"]] / denom
         return wdet * wsel * e1
 
@@ -180,7 +180,7 @@ class FpfsExtE2(FpfsObsBase):
 
         # ellipticity
         denom = self.params.A * cat[did["m00"]] ** self.params.alpha \
-            + self.params.B * cat[did["m20"]] ** self.params.beta \
-            + self.params.C
+            + self.params.B * (cat[did["m00"]] + cat[did["m20"]]) \
+            ** self.params.beta + self.params.C
         e2 = cat[did["m22s"]] / denom
         return wdet * wsel * e2
