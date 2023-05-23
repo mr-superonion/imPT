@@ -49,10 +49,11 @@ jobs:
         pytest \
         numpy \
         galsim \
-        numba \
-        jax \
         astropy \
         fitsio
+
+        python -m pip install --upgrade pip
+        pip install -U setuptools
 
         cd FPFS
         pip install -e . --user
