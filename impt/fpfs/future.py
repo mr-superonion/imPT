@@ -26,13 +26,9 @@ from .linobs import FpfsLinResponse
 from .utils import tsfunc2, smfunc, ssfunc2, ssfunc3
 
 __all__ = [
-    "FpfsParams",
-    "FpfsE1",
-    "FpfsE2",
-    "FpfsWeightSelect",
-    "FpfsWeightDetect",
-    "FpfsWeightE1",
-    "FpfsWeightE2",
+    "FpfsExtParams",
+    "FpfsExtE1",
+    "FpfsExtE2",
 ]
 
 """
@@ -43,11 +39,14 @@ or take it as an example to develop new system
 # Observables
 
 
-class FpfsParams(struct.PyTreeNode):
+class FpfsExtParams(struct.PyTreeNode):
     """FPFS parameter tree, these parameters are fixed in the tree"""
 
-    # Weighting parameter
-    Const: float = struct.field(pytree_node=False, default=10.0)
+    # Exting parameter
+    B: float = struct.field(pytree_node=True, default=1.0)
+    C: float = struct.field(pytree_node=True, default=10.0)
+    alpha: float = struct.field(pytree_node=True, default=1.0)
+    beta: float = struct.field(pytree_node=True, default=1.0)
 
     # flux selection
     # cut on magntidue
@@ -71,7 +70,7 @@ class FpfsParams(struct.PyTreeNode):
 
 class FpfsObsBase(NlBase):
     def __init__(self, params, parent=None, func_name="ts2"):
-        if not isinstance(params, FpfsParams):
+        if not isinstance(params, FpfsExtParams):
             raise TypeError("params is not FPFS parameters")
         lin_resp = FpfsLinResponse()
         if func_name == "sm":
@@ -91,91 +90,7 @@ class FpfsObsBase(NlBase):
         )
 
 
-class FpfsWeightSelect(FpfsObsBase):
-    """FPFS selection weight"""
-
-    def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
-        super().__init__(
-            params=params,
-            parent=parent,
-            func_name=func_name,
-        )
-
-    # @partial(jit, static_argnums=(0,))
-    def _base_func(self, cat):
-        # selection on flux
-        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
-
-        # selection on size (lower limit)
-        # (M00 + M20) / M00 > lower_r2_lower
-        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
-        w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
-
-        # selection on size (upper limit)
-        # (M00 + M20) / M00 < upper_r2
-        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
-        # w2l = 1.
-        # w2u = 1.
-        out = w0 * w2l * w2u
-        return out
-
-
-class FpfsWeightDetect(FpfsObsBase):
-    """FPFS detection weight"""
-
-    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
-        self.nmodes = 31
-        self.skip = skip
-        super().__init__(
-            params=params,
-            parent=parent,
-            func_name=func_name,
-        )
-
-    # @partial(jit, static_argnums=(0,))
-    def _base_func(self, cat):
-        out = 1.0
-        for i in range(0, npeak, self.skip):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            out = out * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
-        return out
-
-
-class FpfsE1(FpfsObsBase):
-    """FPFS ellipticity (first component)"""
-
-    def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
-        super().__init__(
-            params=params,
-            parent=parent,
-        )
-
-    # @partial(jit, static_argnums=(0,))
-    def _base_func(self, cat):
-        return cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
-
-
-class FpfsE2(FpfsObsBase):
-    """FPFS ellipticity (second component)"""
-
-    def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
-        super().__init__(
-            params=params,
-            parent=parent,
-            func_name=func_name,
-        )
-
-    # @partial(jit, static_argnums=(0,))
-    def _base_func(self, cat):
-        return cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
-
-
-class FpfsWeightE1(FpfsObsBase):
+class FpfsExtE1(FpfsObsBase):
     """FPFS selection weight"""
 
     def __init__(self, params, parent=None, skip=1, func_name="ts2"):
@@ -205,6 +120,7 @@ class FpfsWeightE1(FpfsObsBase):
         w2u = 1.0
         wsel = w0 * w2l * w2u
 
+        # detection
         wdet = 1.0
         for i in range(0, npeak, self.skip):
             # v_i > lower_v
@@ -214,11 +130,15 @@ class FpfsWeightE1(FpfsObsBase):
                 self.params.sigma_v,
             )
 
-        e1 = cat[did["m22c"]] / (cat[did["m00"]] + self.params.Const)
+        # ellipticity
+        denom = self.params.A * cat[did["m00"]] ** self.params.alpha \
+            + self.params.B * cat[did["m20"]] ** self.params.beta \
+            + self.params.C
+        e1 = cat[did["m22c"]] / denom
         return wdet * wsel * e1
 
 
-class FpfsWeightE2(FpfsObsBase):
+class FpfsExtE2(FpfsObsBase):
     """FPFS selection weight"""
 
     def __init__(self, params, parent=None, skip=1, func_name="ts2"):
@@ -248,6 +168,7 @@ class FpfsWeightE2(FpfsObsBase):
         w2u = 1.0
         wsel = w0 * w2l * w2u
 
+        # detection
         wdet = 1.0
         for i in range(0, npeak, self.skip):
             # v_i > lower_v
@@ -256,5 +177,10 @@ class FpfsWeightE2(FpfsObsBase):
                 self.params.lower_v,
                 self.params.sigma_v,
             )
-        e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
+
+        # ellipticity
+        denom = self.params.A * cat[did["m00"]] ** self.params.alpha \
+            + self.params.B * cat[did["m20"]] ** self.params.beta \
+            + self.params.C
+        e2 = cat[did["m22s"]] / denom
         return wdet * wsel * e2
