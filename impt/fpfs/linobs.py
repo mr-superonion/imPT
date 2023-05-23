@@ -16,9 +16,9 @@
 # This file contains pytrees for linear observables measured from images
 # and functions to get their shear response
 
-from jax import jit
+# from jax import jit
+# from functools import partial
 import jax.numpy as jnp
-from functools import partial
 from fitsio import read as fitsread
 import numpy.lib.recfunctions as rfn
 

@@ -15,7 +15,7 @@
 
 import logging
 from flax import struct
-from jax import lax, jit, grad, jacfwd, jacrev
+from jax import lax, grad, jacfwd, jacrev
 
 
 logging.basicConfig(
