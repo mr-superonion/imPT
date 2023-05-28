@@ -40,6 +40,7 @@ or take it as an example to develop new system
 
 def read_catalog(fname):
     x = fitsread(fname)[col_names]
+    x = x[(x["fpfs_M00"] + x["fpfs_M20"]) > 1e-5]
     out = rfn.structured_to_unstructured(x, copy=False)
     out = jnp.array(out, dtype=jnp.float64)
     return out

@@ -17,6 +17,7 @@
 # from jax import jit
 # from functools import partial
 
+import numpy as np
 from flax import struct
 from .default import npeak
 
@@ -24,6 +25,7 @@ from .default import indexes as did
 from ..base import NlBase
 from .linobs import FpfsLinResponse
 from .utils import tsfunc2, smfunc, ssfunc2, ssfunc3
+from ..perturb import BiasNoise, RespG1, RespG2
 
 __all__ = [
     "FpfsExtParams",
@@ -43,8 +45,8 @@ class FpfsExtParams(struct.PyTreeNode):
     """FPFS parameter tree, these parameters are fixed in the tree"""
 
     # Exting parameter
-    B: float = struct.field(pytree_node=True, default=1.0)
-    C: float = struct.field(pytree_node=True, default=10.0)
+    C0: float = struct.field(pytree_node=True, default=5.0)
+    C2: float = struct.field(pytree_node=True, default=5.0)
     alpha: float = struct.field(pytree_node=True, default=1.3)
     beta: float = struct.field(pytree_node=True, default=1.2)
 
@@ -131,9 +133,9 @@ class FpfsExtE1(FpfsObsBase):
             )
 
         # ellipticity
-        denom = cat[did["m00"]] ** self.params.alpha \
-            + self.params.B * (cat[did["m00"]] + cat[did["m20"]]) \
-            ** self.params.beta + self.params.C
+        denom = (cat[did["m00"]] + self.params.C0) ** self.params.alpha * (
+            cat[did["m00"]] + cat[did["m20"]] + self.params.C2
+        ) ** self.params.beta
         e1 = cat[did["m22c"]] / denom
         return wdet * wsel * e1
 
@@ -179,8 +181,90 @@ class FpfsExtE2(FpfsObsBase):
             )
 
         # ellipticity
-        denom = self.params.A * cat[did["m00"]] ** self.params.alpha \
-            + self.params.B * (cat[did["m00"]] + cat[did["m20"]]) \
-            ** self.params.beta + self.params.C
+        denom = (cat[did["m00"]] + self.params.C0) ** self.params.alpha * (
+            cat[did["m00"]] + cat[did["m20"]] + self.params.C2
+        ) ** self.params.beta
         e2 = cat[did["m22s"]] / denom
         return wdet * wsel * e2
+
+
+def prepare_func_e1(
+    cov_mat,
+    ratio=1.3,
+    c0=4.0,
+    c2=4.0,
+    alpha=0.2,
+    beta=0.8,
+    snr_min=12,
+    r2_min=0.03,
+    r2_max=2.0,
+):
+    std_modes = np.sqrt(np.diagonal(cov_mat))
+    std_m00 = std_modes[did["m00"]]
+    std_m20 = np.sqrt(
+        cov_mat[did["m00"], did["m00"]]
+        + cov_mat[did["m20"], did["m20"]]
+        + cov_mat[did["m00"], did["m20"]]
+        + cov_mat[did["m20"], did["m00"]]
+    )
+    std_v0 = std_modes[did["v0"]]
+    params = FpfsExtParams(
+        C0=c0 * std_m00,
+        C2=c2 * std_m20,
+        alpha=alpha,
+        beta=beta,
+        lower_m00=snr_min * std_m00,
+        lower_r2=r2_min,
+        upper_r2=r2_max,
+        lower_v=ratio * std_v0 * 0.4,
+        sigma_m00=ratio * std_m00,
+        sigma_r2=ratio * std_m20,
+        sigma_v=ratio * std_v0,
+    )
+    funcnm = "ss2"
+    e1 = FpfsExtE1(params, func_name=funcnm)
+    enoise = BiasNoise(e1, cov_mat)
+    res1 = RespG1(e1)
+    rnoise = BiasNoise(res1, cov_mat)
+    return e1, enoise, res1, rnoise
+
+
+def prepare_func_e2(
+    cov_mat,
+    ratio=1.3,
+    c0=4.0,
+    c2=4.0,
+    alpha=0.2,
+    beta=0.8,
+    snr_min=12,
+    r2_min=0.03,
+    r2_max=2.0,
+):
+    std_modes = np.sqrt(np.diagonal(cov_mat))
+    std_m00 = std_modes[did["m00"]]
+    std_m20 = np.sqrt(
+        cov_mat[did["m00"], did["m00"]]
+        + cov_mat[did["m20"], did["m20"]]
+        + cov_mat[did["m00"], did["m20"]]
+        + cov_mat[did["m20"], did["m00"]]
+    )
+    std_v0 = std_modes[did["v0"]]
+    params = FpfsExtParams(
+        C0=c0 * std_m00,
+        C2=c2 * std_m20,
+        alpha=alpha,
+        beta=beta,
+        lower_m00=snr_min * std_m00,
+        lower_r2=r2_min,
+        upper_r2=r2_max,
+        lower_v=ratio * std_v0 * 0.4,
+        sigma_m00=ratio * std_m00,
+        sigma_r2=ratio * std_m20,
+        sigma_v=ratio * std_v0,
+    )
+    funcnm = "ss2"
+    e2 = FpfsExtE2(params, func_name=funcnm)
+    enoise = BiasNoise(e2, cov_mat)
+    res2 = RespG2(e2)
+    rnoise = BiasNoise(res2, cov_mat)
+    return e2, enoise, res2, rnoise
