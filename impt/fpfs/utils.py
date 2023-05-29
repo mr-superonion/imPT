@@ -108,7 +108,7 @@ def ssfunc2(x, mu, sigma):
     t = (x - mu) / sigma / 2.0 + 0.5
 
     def func(t):
-        return 6 * t**5.0 - 15 * t**4.0 + 10 * t**3.0
+        return 6 * t ** 5.0 - 15 * t ** 4.0 + 10 * t ** 3.0
 
     return jnp.piecewise(t, [t < 0, (t >= 0) & (t <= 1), t > 1], [0.0, func, 1.0])
 
@@ -127,6 +127,6 @@ def ssfunc3(x, mu, sigma):
     t = (x - mu) / sigma / 2.0 + 0.5
 
     def func(t):
-        return -20 * t**7 + 70 * t**6.0 - 84 * t**5.0 + 35 * t**4.0
+        return -20 * t ** 7 + 70 * t ** 6.0 - 84 * t ** 5.0 + 35 * t ** 4.0
 
     return jnp.piecewise(t, [t < 0, (t >= 0) & (t <= 1), t > 1], [0.0, func, 1.0])

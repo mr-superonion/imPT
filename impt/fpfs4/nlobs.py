@@ -13,26 +13,32 @@
 #
 # python lib
 
+from functools import partial
+
+import jax.numpy as jnp
+from flax import struct
+
 # This file contains modules for nonlinear observables measured from images
 from jax import jit
-from flax import struct
-import jax.numpy as jnp
-from functools import partial
-from .default import npeak
 
-from .default import indexes as did
 from ..base import NlBase
+from .default import indexes as did
+from .default import npeak
 from .linobs import FpfsLinResponse
-from .utils import tsfunc2, smfunc, ssfunc2, ssfunc3
+from .utils import smfunc, ssfunc2, ssfunc3, tsfunc2
 
 __all__ = [
     "FpfsParams",
     "FpfsE1",
     "FpfsE2",
+    "FpfsE41",
+    "FpfsE42",
     "FpfsWeightSelect",
     "FpfsWeightDetect",
     "FpfsWeightE1",
     "FpfsWeightE2",
+    "FpfsWeightE41",
+    "FpfsWeightE42",
 ]
 
 """
@@ -184,11 +190,8 @@ class FpfsE41(FpfsObsBase):
     """FPFS ellipticity (first component)"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
-        super().__init__(
-            params=params,
-            parent=parent,
-        )
+        self.nmodes = 32
+        super().__init__(params=params, parent=parent, func_name=func_name)
 
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
@@ -199,7 +202,7 @@ class FpfsE42(FpfsObsBase):
     """FPFS ellipticity (second component)"""
 
     def __init__(self, params, parent=None, func_name="ts2"):
-        self.nmodes = 31
+        self.nmodes = 32
         super().__init__(
             params=params,
             parent=parent,
@@ -280,4 +283,82 @@ class FpfsWeightE2(FpfsObsBase):
             vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
             wdet = wdet * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
         e2 = cat[did["m22s"]] / (cat[did["m00"]] + self.params.Const)
+        return wdet * wsel * e2
+
+
+class FpfsWeightE41(FpfsObsBase):
+    """FPFS selection weight"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 32
+        super().__init__(
+            params=params,
+            parent=parent,
+            func_name=func_name,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        # selection on flux
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
+        w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        wsel = w0 * w2l * w2u
+
+        wdet = 1.0
+        for i in range(0, npeak):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
+        e1 = cat[did["m42c"]] / (cat[did["m00"]] + self.params.Const)
+        return wdet * wsel * e1
+
+
+class FpfsWeightE42(FpfsObsBase):
+    """FPFS selection weight"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 32
+        super().__init__(
+            params=params,
+            parent=parent,
+            func_name=func_name,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        # selection on flux
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
+        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        wsel = w0 * w2l * w2u
+
+        wdet = 1.0
+        for i in range(0, npeak):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
+        e2 = cat[did["m42s"]] / (cat[did["m00"]] + self.params.Const)
         return wdet * wsel * e2

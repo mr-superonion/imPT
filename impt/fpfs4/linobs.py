@@ -16,16 +16,16 @@
 # This file contains pytrees for linear observables measured from images
 # and functions to get their shear response
 
-from jax import jit
-import jax.numpy as jnp
 from functools import partial
-from fitsio import read as fitsread
+
+import jax.numpy as jnp
 import numpy.lib.recfunctions as rfn
+from fitsio import read as fitsread
+from jax import jit
 
-from .default import indexes as did
-from .default import col_names
 from ..base import LinRespBase
-
+from .default import col_names
+from .default import indexes as did
 
 __all__ = ["read_catalog", "FpfsLinResponse"]
 
@@ -60,9 +60,9 @@ class FpfsLinResponse(LinRespBase):
         # here (But if you are interested in playing with shear response of
         # this term, please contact me.)
         fpfs_m40 = jnp.zeros_like(row[did["m40"]])  # fix this to 0
-        fpfs_m42c = jnp.zeros_like(row[did["m42c"]])  # TODO: Andy
-        fpfs_m42s = jnp.zeros_like(row[did["m42s"]])  # TODO: Andy
-        fpfs_m60 = jnp.zeros_like(row[did["m42c"]])  # fix this to 0
+        fpfs_m42c = jnp.sqrt(6.0) / 2 * (row[did["m20"]] - row[did["m60"]])
+        fpfs_m42s = jnp.zeros_like(row[did["m42s"]])
+        fpfs_m60 = jnp.zeros_like(row[did["m42c"]])
         out = jnp.stack(
             [
                 fpfs_m00,
@@ -99,9 +99,9 @@ class FpfsLinResponse(LinRespBase):
         # here (But if you are interested in playing with shear response of
         # this term, please contact me.)
         fpfs_m40 = jnp.zeros_like(row[did["m40"]])
-        fpfs_m42c = jnp.zeros_like(row[did["m42c"]])  # TODO: Andy
-        fpfs_m42s = jnp.zeros_like(row[did["m42s"]])  # TODO: Andy
-        fpfs_m60 = jnp.zeros_like(row[did["m42c"]])  # fix this to 0
+        fpfs_m42c = jnp.zeros_like(row[did["m42c"]])
+        fpfs_m42s = jnp.sqrt(6.0) / 2 * (row[did["m20"]] - row[did["m60"]])
+        fpfs_m60 = jnp.zeros_like(row[did["m42c"]])
         out = jnp.stack(
             [
                 fpfs_m00,
