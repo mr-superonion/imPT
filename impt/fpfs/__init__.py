@@ -5,6 +5,7 @@ from .linobs import *
 from .nlobs import *
 from . import utils
 from . import test_utils
+from . import future
 
 __data_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -13,3 +14,4 @@ __all__ += linobs.__all__
 __all__ += nlobs.__all__
 __all__ += ["utils"]
 __all__ += ["test_utils"]
+__all__ += ["future"]

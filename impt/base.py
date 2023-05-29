@@ -13,8 +13,16 @@
 #
 # python lib
 
+import logging
 from flax import struct
-from jax import lax, jit, grad, jacfwd, jacrev
+from jax import lax, grad, jacfwd, jacrev
+
+
+logging.basicConfig(
+    format="%(asctime)s %(message)s",
+    datefmt="%Y/%m/%d %H:%M:%S --- ",
+    level=logging.INFO,
+)
 
 
 class LinRespBase:
@@ -56,13 +64,11 @@ class NlBase:
 
     def _set_obs_func(self, func):
         """Setup observable functions [func, derivative and Hessian]"""
-        self._obs_func = jit(func)
-        self._obs_grad_func = jit(grad(self._obs_func, argnums=self.nmodes))
-        self._obs_hessian_func = jit(
-            jacfwd(
-                jacrev(
-                    self._obs_func,
-                )
+        self._obs_func = func
+        self._obs_grad_func = grad(self._obs_func, argnums=self.nmodes)
+        self._obs_hessian_func = jacfwd(
+            jacrev(
+                self._obs_func,
             )
         )
         return

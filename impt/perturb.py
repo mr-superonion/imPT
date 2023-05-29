@@ -16,9 +16,9 @@
 # This file contains modules for perturbation functionals
 # (vector perturbation: shear & tensor perturbation: noise)
 
-from jax import jit
+# from jax import jit
+# from functools import partial
 import jax.numpy as jnp
-from functools import partial
 from .base import NlBase
 
 __all__ = ["RespG1", "RespG2", "BiasNoise"]
@@ -46,7 +46,7 @@ class RespG1(NlBase):
         super().__init__(parent.params, parent, parent.lin_resp)
         return
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
@@ -71,7 +71,7 @@ class RespG2(NlBase):
         super().__init__(parent.params, parent, parent.lin_resp)
         return
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, x):
         """Returns the first-order shear response."""
         res = jnp.dot(
@@ -103,7 +103,7 @@ class BiasNoise(NlBase):
     def update_noise_cov(self, noise_cov):
         self.noise_cov = noise_cov
 
-    @partial(jit, static_argnums=(0,))
+    # @partial(jit, static_argnums=(0,))
     def _base_func(self, x):
         """Returns the second-order noise response"""
         indexes = [[-2, -1], [-2, -1]]

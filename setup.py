@@ -25,9 +25,9 @@ setup(
     install_requires=[
         "numpy",
         "schwimmbad",
-        "jax",
+        "jax>=0.4.9",
+        "jaxlib>=0.4.9",
         "flax",
-        "fpfs",
         "fitsio",
         "pre-commit",
     ],
