@@ -221,6 +221,19 @@ def prepare_func_e1(
         sigma_r2=ratio * std_m20,
         sigma_v=ratio * std_v0,
     )
+    # params = FpfsExtParams(
+    #     C0=20,
+    #     C2=20,
+    #     alpha=alpha,
+    #     beta=beta,
+    #     lower_m00=30,
+    #     lower_r2=r2_min,
+    #     upper_r2=r2_max,
+    #     lower_v=2.0 * 0.4,
+    #     sigma_m00=4.0,
+    #     sigma_r2=6.0,
+    #     sigma_v=2.0,
+    # )
     funcnm = "ss2"
     e1 = FpfsExtE1(params, func_name=funcnm)
     enoise = BiasNoise(e1, cov_mat)
@@ -231,12 +244,12 @@ def prepare_func_e1(
 
 def prepare_func_e2(
     cov_mat,
-    ratio=1.3,
-    c0=4.0,
-    c2=4.0,
-    alpha=0.2,
-    beta=0.8,
-    snr_min=12,
+    ratio=1.6,
+    c0=3.0,
+    c2=12.0,
+    alpha=0.5,
+    beta=0.17,
+    snr_min=15,
     r2_min=0.03,
     r2_max=2.0,
 ):
