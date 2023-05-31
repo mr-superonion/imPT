@@ -190,12 +190,12 @@ class FpfsExtE2(FpfsObsBase):
 
 def prepare_func_e1(
     cov_mat,
-    ratio=1.3,
-    c0=4.0,
-    c2=4.0,
-    alpha=0.2,
-    beta=0.8,
-    snr_min=12,
+    ratio=1.6,
+    c0=3.0,
+    c2=12.0,
+    alpha=0.5,
+    beta=0.17,
+    snr_min=15,
     r2_min=0.03,
     r2_max=2.0,
 ):
