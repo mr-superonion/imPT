@@ -25,7 +25,7 @@ test_thres = 1e-4
 params = future.FpfsExtParams(
     lower_m00=0.0,
     lower_r2=0.0,
-    lower_v=-10.0,  # cannot test detection with 4 galaxies; need 6 galaxies
+    lower_v=0.0,
     sigma_m00=0.4,
     sigma_r2=0.8,
     sigma_v=0.2,
@@ -64,12 +64,11 @@ def simulate_gal_psf(scale, ind0, rcut):
     return gal_data, psf_data, coords
 
 
+# test works M00 + M20 > 0 for noiseless case
 def do_test(scale, ind0, rcut):
     gal_data, psf_data, coords = simulate_gal_psf(scale, ind0, rcut)
     # test shear estimation
     fpfs_task = fpfs.image.measure_source(psf_data, sigma_arcsec=0.5)
-    # linear observables
-    # detection
     p1 = 32 - rcut
     p2 = 64 * 2 - rcut
     psf_data2 = jnp.pad(psf_data, ((p1, p1), (p2, p2)))
@@ -79,7 +78,6 @@ def do_test(scale, ind0, rcut):
         gsigma=fpfs_task.sigmaF_det,
         thres=0.01,
         thres2=0.00,
-        klim=fpfs_task.klim,
     )
     assert np.all(coords2 == coords)
     cat = fpfs_task.measure(gal_data, coords2)

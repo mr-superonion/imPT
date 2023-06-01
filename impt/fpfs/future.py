@@ -33,13 +33,6 @@ __all__ = [
     "FpfsExtE2",
 ]
 
-"""
-The following Classes are for FPFS. Feel free to extend the following system
-or take it as an example to develop new system
-"""
-# TODO: Contact me if you are interested in developing a new system of
-# Observables
-
 
 class FpfsExtParams(struct.PyTreeNode):
     """FPFS parameter tree, these parameters are fixed in the tree"""
@@ -195,7 +188,7 @@ def prepare_func_e1(
     c2=12.0,
     alpha=0.5,
     beta=0.17,
-    snr_min=15,
+    snr_min=12,
     r2_min=0.03,
     r2_max=2.0,
 ):

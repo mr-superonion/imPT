@@ -20,11 +20,13 @@ import impt
 import fitsio
 import schwimmbad
 import numpy as np
-from scipy.optimize import minimize
 from impt.fpfs.future import prepare_func_e1
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
+import logging
+
+logging.getLogger().setLevel(logging.CRITICAL)
 
 
 def get_processor_count(pool, args):
@@ -66,7 +68,6 @@ class Worker(object):
 
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
-        self.sum_dir = cparser.get("procsim", "sum_dir")
         self.do_noirev = cparser.getboolean("FPFS", "do_noirev")
         ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
         self.cov_mat = fitsio.read(ncov_fname)
@@ -145,11 +146,11 @@ def process(args, pars):
         worker = Worker(
             args.config,
             min_id=0,
-            max_id=args.n_cores,
+            max_id=args.n_cores,  # 500,
             ncores=ncores,
             **params,
         )
-        outcome = np.vstack(list(pool.map(worker.run, core_list)))
+        outcome = np.hstack(list(pool.map(worker.run, core_list)))
         std = np.std(outcome)
         print("std: %s" % std)
     return std
@@ -179,24 +180,26 @@ if __name__ == "__main__":
         help="Run with MPI.",
     )
     args = parser.parse_args()
-    cparser = ConfigParser()
-    cparser.read(args.config)
-    magz = cparser.getfloat("survey", "mag_zero")
-
     process_opt = lambda _: process(args=args, pars=_)
-    bounds = [
-        (0.5, 1.6),
-        (2.0, 20.0),
-        (2.0, 20.0),
-        (0.0, 1.0),
-        (0.0, 1.0),
-    ]
-    x0 = np.array([1.6, 3.0, 12.0, 0.5, 0.18])
-    op = {"maxiter": 10, "disp": False, "xtol": 1e-1}
-    res = minimize(
-        process_opt,
-        x0,
-        bounds=bounds,
-        method="Nelder-Mead",
-    )
+    x0 = np.array([1.53, 1.83, 10.2, 0.57, 0.20])
+
+    if False:
+        res = process_opt(x0)
+    else:
+        from scipy.optimize import minimize
+
+        bounds = [
+            (0.5, 2.0),
+            (1.0, 20.0),
+            (1.0, 20.0),
+            (0.0, 1.0),
+            (0.0, 1.0),
+        ]
+        op = {"maxiter": 100, "disp": False, "xtol": 1e-1}
+        res = minimize(
+            process_opt,
+            x0,
+            bounds=bounds,
+            method="Nelder-Mead",
+        )
     print(res)

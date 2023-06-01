@@ -78,7 +78,6 @@ def do_test(scale, ind0, rcut):
         gsigma=fpfs_task.sigmaF_det,
         thres=0.01,
         thres2=0.00,
-        klim=fpfs_task.klim,
     )
     assert np.all(coords2 == coords)
     cat = fpfs_task.measure(gal_data, coords2)

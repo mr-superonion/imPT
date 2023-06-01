@@ -15,6 +15,7 @@ scripts = [
     "bin/impt_process_fpfs_sim.py",
     "bin/impt_summary_desc_future.py",
     "bin/impt_std_future.py",
+    "bin/impt_std_future_from_image.py",
     "bin/make_summary.py",
 ]
 
