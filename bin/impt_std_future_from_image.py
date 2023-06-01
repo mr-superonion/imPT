@@ -171,7 +171,8 @@ class Worker(object):
         coords = fpfs.image.detect_sources(
             gal_array,
             psf_array3,
-            gsigma=meas_task.sigmaF_det,
+            sigmaf=meas_task.sigmaf,
+            sigmaf_det=meas_task.sigmaf_det,
             thres=thres,
             thres2=thres2,
         )
