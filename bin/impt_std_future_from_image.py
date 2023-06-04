@@ -63,7 +63,14 @@ nstd_map = {
     "r": 0.371,
     "i": 0.595,
     "z": 1.155,
-    "a": 0.21861,
+    "a": 0.2793,
+}
+
+w_map = {
+    "g": 0.12503653,
+    "r": 0.47022727,
+    "i": 0.30897575,
+    "z": 0.09576044,
 }
 
 
@@ -178,14 +185,16 @@ class Worker(object):
         cov_mat = np.array(noise_task.measure(self.noise_pow))
         del noise_task
         # image
-        # seed = get_seed_from_fname(fname, self.band)
-        # rng = np.random.RandomState(seed)
-        # gal_array = exposure.getMaskedImage().getImage().getArray() + rng.normal(
-        #     scale=self.nstd_f,
-        #     size=(self.image_nx, self.image_nx),
-        # )
-        # del rng
-        gal_array = exposure.getMaskedImage().getImage().getArray()
+        if False:
+            seed = get_seed_from_fname(fname, self.band)
+            rng = np.random.RandomState(seed)
+            gal_array = exposure.getMaskedImage().getImage().getArray() + rng.normal(
+                scale=self.nstd_f,
+                size=(self.image_nx, self.image_nx),
+            )
+            del rng
+        else:
+            gal_array = exposure.getMaskedImage().getImage().getArray()
         # print(np.sqrt(np.diag(cov_mat)))
         del exposure
         gc.collect()
@@ -334,13 +343,13 @@ if __name__ == "__main__":
         (0.45, 0.75),
         (0.45, 0.75),
     ]
-    x0 = np.array([1.52, 2.46, 22.74, 0.35, 0.92, 0.52, 0.53])
+    x0 = np.array([1.501, 2.548, 22.774, 0.366, 0.960, 0.536, 0.507])
     op = {"maxiter": 400, "disp": False, "xtol": 1e-1}
     res = minimize(
         process_opt,
         x0,
         bounds=bounds,
         method="Nelder-Mead",
-        # method="L-BFGS-B",
+        # method="Powell",
     )
     print(res)
