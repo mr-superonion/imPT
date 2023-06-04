@@ -35,7 +35,7 @@ cparser.read(args.config)
 sum_dir = cparser.get("procsim", "sum_dir")
 shear = cparser.getfloat("distortion", "shear_value")
 
-for mag in [24, 24.5, 25, 25.5, 26.0, 26.5]:
+for mag in [24, 24.5, 25, 25.5, 26.0, 26.5, 27.0, 27.5]:
     fname = "%s/bin_%.1f.fits" % (sum_dir, mag)
     if not os.path.isfile(fname):
         continue

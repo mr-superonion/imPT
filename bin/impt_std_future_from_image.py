@@ -21,7 +21,7 @@ import pickle
 import schwimmbad
 import numpy as np
 from scipy.optimize import minimize
-from impt.fpfs.future import prepare_func_e1
+from impt.fpfs.future import prepare_func_e
 from impt.fpfs.default import indexes as did
 
 import lsst.geom as lsstgeom
@@ -50,19 +50,37 @@ def get_processor_count(pool, args):
         return 1
 
 
+band_map = {
+    "g": 0,
+    "r": 1,
+    "i": 2,
+    "z": 3,
+    "a": 4,
+}
+
 nstd_map = {
     "g": 0.315,
     "r": 0.371,
     "i": 0.595,
     "z": 1.155,
-    "*": 0.21861,
+    "a": 0.21861,
 }
+
+
+def get_seed_from_fname(fname, band):
+    fid = int(fname.split("image-")[-1].split("_")[0]) + 212
+    rid = int(fname.split("rot")[1][0])
+    bid = band_map[band]
+    return (fid * 2 + rid) * 4 + bid
 
 
 class Worker(object):
     def __init__(
         self,
         config_name,
+        min_id=0,
+        max_id=1000,
+        ncores=1,
         ratio=1.3,
         c0=4.0,
         c2=4.0,
@@ -73,12 +91,23 @@ class Worker(object):
     ):
         cparser = ConfigParser()
         cparser.read(config_name)
+
+        # simulation parameter
+        nids = max_id - min_id
+        self.n_per_c = nids // ncores
+        self.mid = nids % ncores
+        self.min_id = min_id
+        self.max_id = max_id
+        self.rest_list = list(np.arange(ncores * self.n_per_c, nids) + min_id)
+        print("number of files per core is: %d" % self.n_per_c)
+        # print(self.min_id, self.max_id)
+
         self.img_dir = cparser.get("procsim", "img_dir")
         self.rcut = cparser.getint("FPFS", "rcut")
         self.nnord = cparser.getint("FPFS", "nnord", fallback=4)
         ngrid = 2 * self.rcut
         self.psf_fname = cparser.get("procsim", "psf_fname")
-        self.band = "*"
+        self.band = cparser.get("survey", "band")
         self.nstd_f = nstd_map[self.band]
         self.noise_pow = np.ones((ngrid, ngrid)) * self.nstd_f**2.0 * ngrid**2.0
         self.scale = 0.2
@@ -91,8 +120,15 @@ class Worker(object):
         self.beta = beta
         self.sigma_mea = sigma_mea
         self.sigma_det = sigma_det
-
         return
+
+    def get_range(self, icore):
+        ibeg = self.min_id + icore * self.n_per_c
+        iend = min(ibeg + self.n_per_c, self.max_id)
+        id_range = list(range(ibeg, iend))
+        if icore < len(self.rest_list):
+            id_range.append(self.rest_list[icore])
+        return id_range
 
     def prepare_psf(self, exposure, rcut, ngrid2):
         # pad to (64, 64) and then cut off
@@ -116,7 +152,7 @@ class Worker(object):
     def prepare_image(self, icore):
         fname = os.path.join(
             self.img_dir,
-            "image-%05d_g1-0_rot0_i.fits" % (icore),
+            "image-%05d_g1-0_rot0_%s.fits" % (icore, self.band),
         )
         exposure = afwimage.ExposureF.readFits(fname)
         # PSF
@@ -142,12 +178,16 @@ class Worker(object):
         cov_mat = np.array(noise_task.measure(self.noise_pow))
         del noise_task
         # image
-        rng = np.random.RandomState(icore)
-        gal_array = exposure.getMaskedImage().getImage().getArray() + rng.normal(
-            scale=self.nstd_f,
-            size=(self.image_nx, self.image_nx),
-        )
-        del exposure, rng
+        # seed = get_seed_from_fname(fname, self.band)
+        # rng = np.random.RandomState(seed)
+        # gal_array = exposure.getMaskedImage().getImage().getArray() + rng.normal(
+        #     scale=self.nstd_f,
+        #     size=(self.image_nx, self.image_nx),
+        # )
+        # del rng
+        gal_array = exposure.getMaskedImage().getImage().getArray()
+        # print(np.sqrt(np.diag(cov_mat)))
+        del exposure
         gc.collect()
         return gal_array, psf_array2, psf_array3, cov_mat
 
@@ -165,7 +205,7 @@ class Worker(object):
         std_modes = np.sqrt(np.diagonal(cov_mat))
         idm00 = fpfs.catalog.indexes["m00"]
         idv0 = fpfs.catalog.indexes["v0"]
-        thres = 12.0 * std_modes[idm00] * self.scale**2.0
+        thres = 10.0 * std_modes[idm00] * self.scale**2.0
         thres2 = -1.5 * std_modes[idv0] * self.scale**2.0
 
         coords = fpfs.image.detect_sources(
@@ -175,6 +215,7 @@ class Worker(object):
             sigmaf_det=meas_task.sigmaf_det,
             thres=thres,
             thres2=thres2,
+            bound=self.rcut + 5,
         )
         mm = meas_task.measure(gal_array, coords)
         del meas_task
@@ -185,32 +226,35 @@ class Worker(object):
         return mm, cov_mat
 
     def run(self, icore):
-        mm, cov_mat = self.process_image(icore)
-        e1, enoise, res1, rnoise = prepare_func_e1(
-            cov_mat=cov_mat,
-            ratio=self.ratio,
-            c0=self.c0,
-            c2=self.c2,
-            alpha=self.alpha,
-            beta=self.beta,
-        )
-        del cov_mat
+        id_range = self.get_range(icore)
+        out = np.empty(len(id_range))
+        # print("start core: %d, with id: %s" % (icore, id_range))
+        for icount, ifield in enumerate(id_range):
+            mm, cov_mat = self.process_image(ifield)
+            e1, enoise, res1, rnoise = prepare_func_e(
+                cov_mat=cov_mat,
+                ratio=self.ratio,
+                c0=self.c0,
+                c2=self.c2,
+                alpha=self.alpha,
+                beta=self.beta,
+                g_comp=1,
+            )
+            del cov_mat
 
-        def fune(carry, ss):
-            y = e1._obs_func(ss) - enoise._obs_func(ss)  # noqa
-            return carry + y, None
+            def fune(carry, ss):
+                y = e1._obs_func(ss) - enoise._obs_func(ss)  # noqa
+                return carry + y, None
 
-        def funr(carry, ss):
-            y = res1._obs_func(ss) - rnoise._obs_func(ss)  # noqa
-            return carry + y, None
+            def funr(carry, ss):
+                y = res1._obs_func(ss) - rnoise._obs_func(ss)  # noqa
+                return carry + y, None
 
-        e_sum, _ = jax.lax.scan(fune, 0.0, mm)
-        r_sum, _ = jax.lax.scan(funr, 0.0, mm)
-        del e1, enoise, res1, rnoise, mm
-        jax.clear_caches()
-        jax.clear_backends()
-        gc.collect()
-        out = float(e_sum / r_sum)
+            e_sum, _ = jax.lax.scan(fune, 0.0, mm)
+            r_sum, _ = jax.lax.scan(funr, 0.0, mm)
+            out[icount] = float(e_sum / r_sum)
+            del e1, enoise, res1, rnoise, mm
+            gc.collect()
         return out
 
 
@@ -231,9 +275,13 @@ def process(args, pars):
         core_list = np.arange(ncores)
         worker = Worker(
             args.config,
+            min_id=args.min_id,
+            max_id=args.max_id,
+            ncores=ncores,
             **params,
         )
-        outcome = np.array(list(pool.map(worker.run, core_list)))
+        outcome = np.hstack(list(pool.map(worker.run, core_list)))
+        print(len(outcome))
         std = np.std(outcome)
         print("std: %s" % std)
     gc.collect()
@@ -256,6 +304,18 @@ if __name__ == "__main__":
         type=int,
         help="Number of processes (uses multiprocessing).",
     )
+    parser.add_argument(
+        "--min_id",
+        default=0,
+        type=int,
+        help="id number, e.g. 0",
+    )
+    parser.add_argument(
+        "--max_id",
+        default=100,
+        type=int,
+        help="id number, e.g. 1000",
+    )
     group.add_argument(
         "--mpi",
         dest="mpi",
@@ -267,15 +327,15 @@ if __name__ == "__main__":
     process_opt = lambda _: process(args=args, pars=_)
     bounds = [
         (0.5, 2.5),
-        (1.0, 20.0),
-        (1.0, 20.0),
-        (0.0, 1.0),
-        (0.0, 1.0),
+        (1.5, 40.0),
+        (1.5, 40.0),
+        (0.2, 1.2),
+        (0.2, 1.2),
         (0.45, 0.75),
         (0.45, 0.75),
     ]
-    x0 = np.array([2.3, 1.8, 10.0, 0.6, 0.20, 0.6, 0.5])
-    op = {"maxiter": 10, "disp": False, "xtol": 1e-1}
+    x0 = np.array([1.52, 2.46, 22.74, 0.35, 0.92, 0.52, 0.53])
+    op = {"maxiter": 400, "disp": False, "xtol": 1e-1}
     res = minimize(
         process_opt,
         x0,

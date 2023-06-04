@@ -20,7 +20,7 @@ import impt
 import fitsio
 import schwimmbad
 import numpy as np
-from impt.fpfs.future import prepare_func_e1
+from impt.fpfs.future import prepare_func_e
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -121,7 +121,7 @@ class Worker(object):
         print("start core: %d, with id: %s" % (icore, id_range))
         for icount, ifield in enumerate(id_range):
             for irot in range(2):
-                e1, enoise, res1, rnoise = prepare_func_e1(
+                e1, enoise, res1, rnoise = prepare_func_e(
                     cov_mat=self.cov_mat,
                     snr_min=self.lower_m00 / np.sqrt(self.cov_mat[0, 0]),
                 )
