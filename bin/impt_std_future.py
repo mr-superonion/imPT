@@ -135,7 +135,7 @@ class Worker(object):
 
     def run(self, icore):
         id_range = self.get_range(icore)
-        out = np.empty(len(id_range))
+        out = np.empty((len(id_range), 2))
         # print("start core: %d, with id: %s" % (icore, id_range))
         for icount, ifield in enumerate(id_range):
             e1, enoise, res1, rnoise = prepare_func_e(
@@ -151,9 +151,10 @@ class Worker(object):
                 self.catdir,
                 "src-%05d_g1-0_rot0.fits" % (ifield),
             )
-            e1_1, r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
-            out[icount] = e1_1 / r1_1
-            del e1, enoise, res1, rnoise
+            ell, e_r = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
+            out[icount, 0] = ell
+            out[icount, 1] = e_r
+            del e1, enoise, res1, rnoise, ell, e_r
             gc.collect()
         return out
 
@@ -178,8 +179,9 @@ def process(args, pars):
             ncores=ncores,
             **params,
         )
-        outcome = np.hstack(list(pool.map(worker.run, core_list)))
-        std = np.std(outcome)
+        outcome = np.vstack(list(pool.map(worker.run, core_list)))
+        print(outcome.shape)
+        std = np.std(outcome[:, 0]) / np.average(outcome[:, 1])
         print("std: %s" % std)
     return std
 
@@ -194,7 +196,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--optimize",
-        default=False,
+        default=True,
         type=bool,
         help="configure file name",
     )
@@ -252,7 +254,7 @@ if __name__ == "__main__":
         )
     else:
         bounds = [
-            (1.3, 2.1),
+            (1.3, 1.7),
             (1.8, 3.6),
             (18, 28),
             (0.1, 0.5),

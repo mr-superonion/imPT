@@ -46,5 +46,28 @@ for mag in [24, 24.5, 25, 25.5, 26.0, 26.5, 27.0, 27.5]:
     msk = np.isnan(a[:, 3])
     b = np.average(a, axis=0)
     c = np.std(a, axis=0)
-    print(b[1] / b[3] / shear / 2.0 - 1, c[1] / b[3] / shear / 2.0 / np.sqrt(nsim))
-    print(b[2] / b[3], c[2] / b[3] / np.sqrt(nsim))
+    p = 99.7
+    p2 = (100 - p) / 2.0
+    p3 = p + p2
+    print(b[1] / b[3] / shear / 2.0 - 1)
+    print(
+        (np.percentile(a[:, 1], p2) - np.average(a[:, 1]))
+        / np.average(a[:, 3])
+        / shear
+        / 2.0
+        / np.sqrt(nsim),
+        (np.percentile(a[:, 1], p3) - np.average(a[:, 1]))
+        / np.average(a[:, 3])
+        / shear
+        / 2.0
+        / np.sqrt(nsim),
+    )
+    print(b[2] / b[3])
+    print(
+        (np.percentile(a[:, 2], p2) - np.average(a[:, 2]))
+        / np.average(a[:, 3])
+        / np.sqrt(nsim),
+        (np.percentile(a[:, 1], p3) - np.average(a[:, 1]))
+        / np.average(a[:, 3])
+        / np.sqrt(nsim),
+    )

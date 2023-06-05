@@ -64,13 +64,14 @@ class Worker(object):
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
         self.sum_dir = cparser.get("procsim", "sum_dir")
-        self.do_noirev = cparser.getboolean("FPFS", "do_noirev")
-        if self.do_noirev:
-            ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
-            self.cov_mat = fitsio.read(ncov_fname)
-        else:
-            self.cov_mat = np.zeros((31, 31))
-        self.shear_value = cparser.getfloat("distortion", "shear_value")
+        ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+        self.cov_mat = fitsio.read(ncov_fname)
+        # FPFS parameters
+        self.ratio = cparser.getfloat("FPFS", "ratio")
+        self.c0 = cparser.getfloat("FPFS", "c0")
+        self.c2 = cparser.getfloat("FPFS", "c2")
+        self.alpha = cparser.getfloat("FPFS", "alpha")
+        self.beta = cparser.getfloat("FPFS", "beta")
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
         # This task change the cut on one observable and see how the biases
@@ -124,6 +125,11 @@ class Worker(object):
                 e1, enoise, res1, rnoise = prepare_func_e(
                     cov_mat=self.cov_mat,
                     snr_min=self.lower_m00 / np.sqrt(self.cov_mat[0, 0]),
+                    ratio=self.ratio,
+                    c0=self.c0,
+                    c2=self.c2,
+                    alpha=self.alpha,
+                    beta=self.beta,
                 )
                 in_nm1 = os.path.join(
                     self.catdir,
@@ -195,7 +201,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cparser = ConfigParser()
     cparser.read(args.config)
-    shear_value = cparser.getfloat("distortion", "shear_value")
 
     pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
     ncores = get_processor_count(pool, args)
