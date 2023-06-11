@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>README</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="http://gfarm.ipmu.jp/~xiangchong.li/me/mystyle2.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h1 id="impt">imPT</h1>
+<p><a
+href="https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml"><img
+src="https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml/badge.svg"
+alt="Python package" /></a> <a
+href="https://impt.readthedocs.io/en/latest/?badge=latest"><img
+src="https://readthedocs.org/projects/impt/badge/?version=latest"
+alt="Documentation Status" /></a> <a
+href="https://www.gnu.org/licenses/gpl-3.0"><img
+src="https://img.shields.io/badge/License-GPLv3-blue.svg"
+alt="License: GPL v3" /></a> <a href="https://github.com/psf/black"><img
+src="https://img.shields.io/badge/code%20style-black-000000.svg"
+alt="Code style: black" /></a></p>
+<p>Fast estimator for Lensing Perturbation (<code>imPT</code>) from
+astronomical images using the auto differentiating function of jax.</p>
+<p>A simple code to compute the response to lensing perturbations and
+remove the bias due to the perturbation from image noise.</p>
+<h2 id="installation">Installation</h2>
+<p>For developers:</p>
+<pre class="shell"><code>git clone https://github.com/mr-superonion/imPT.git
+pip install -e . --user</code></pre>
+<p>before running code, users need to setup the environment by</p>
+<pre class="shell"><code>source impt_config</code></pre>
+<h2 id="summary">Summary</h2>
+<p>For the first version of <code>imPT</code>, we implement
+<code>FPFS</code> and use <code>imPT</code> to auto differentiate
+<code>FPFS</code>.</p>
+</body>
+</html>
