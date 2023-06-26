@@ -24,7 +24,7 @@ test_thres = 1e-4
 params = impt.fpfs.FpfsParams(
     lower_m00=0.0,
     lower_r2=0.0,
-    lower_v=-10.0,  # cannot test detection with 4 galaxies; need 6 galaxies
+    lower_v=-0.1,
     sigma_m00=0.4,
     sigma_r2=0.8,
     sigma_v=0.2,
@@ -75,10 +75,10 @@ def do_test(scale, ind0, rcut):
     coords2 = fpfs.image.detect_sources(
         gal_data,
         psf_data2,
-        gsigma=fpfs_task.sigmaF_det,
+        sigmaf=fpfs_task.sigmaf,
+        sigmaf_det=fpfs_task.sigmaf_det,
         thres=0.01,
         thres2=0.00,
-        klim=fpfs_task.klim,
     )
     assert np.all(coords2 == coords)
     cat = fpfs_task.measure(gal_data, coords2)
@@ -93,6 +93,7 @@ def do_test(scale, ind0, rcut):
 def test_hsc():
     print("Testing HSC-like image")
     do_test(0.168, 2, 16)
+    do_test(0.168, 3, 32)
     do_test(0.168, 6, 32)
     return
 

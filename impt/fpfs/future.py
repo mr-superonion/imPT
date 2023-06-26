@@ -33,13 +33,6 @@ __all__ = [
     "FpfsExtE2",
 ]
 
-"""
-The following Classes are for FPFS. Feel free to extend the following system
-or take it as an example to develop new system
-"""
-# TODO: Contact me if you are interested in developing a new system of
-# Observables
-
 
 class FpfsExtParams(struct.PyTreeNode):
     """FPFS parameter tree, these parameters are fixed in the tree"""
@@ -116,10 +109,10 @@ class FpfsExtE1(FpfsObsBase):
 
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        # M00 ( 1 - lower_r2_lower) + M20 > 0
-        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
-        w2u = 1.0
+        # M00 (1 - upper_r2) + M20 < 0
+        # M00 (upper_r2 - 1) - M20 > 0
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
         wsel = w0 * w2l * w2u
 
         # detection
@@ -156,20 +149,19 @@ class FpfsExtE2(FpfsObsBase):
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
-
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         # M00 ( 1 - lower_r2_lower) + M20 > 0
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
         w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
-
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
-        # r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
-        # w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
-        w2u = 1.0
-        wsel = w0 * w2l * w2u
+        # M00 (1 - upper_r2) + M20 < 0
+        # M00 (upper_r2 - 1) - M20 > 0
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
 
+        wsel = w0 * w2l * w2u
         # detection
         wdet = 1.0
         for i in range(0, npeak, self.skip):
@@ -188,17 +180,21 @@ class FpfsExtE2(FpfsObsBase):
         return wdet * wsel * e2
 
 
-def prepare_func_e1(
+def prepare_func_e(
     cov_mat,
-    ratio=1.3,
-    c0=4.0,
-    c2=4.0,
-    alpha=0.2,
-    beta=0.8,
+    ratio=1.81,
+    c0=2.55,
+    c2=25.6,
+    alpha=0.27,
+    beta=0.83,
     snr_min=12,
     r2_min=0.03,
     r2_max=2.0,
+    g_comp=1,
+    funcnm="ss2",
 ):
+    if g_comp not in [1, 2]:
+        raise ValueError("g_comp can only be 1 or 2")
     std_modes = np.sqrt(np.diagonal(cov_mat))
     std_m00 = std_modes[did["m00"]]
     std_m20 = np.sqrt(
@@ -221,50 +217,25 @@ def prepare_func_e1(
         sigma_r2=ratio * std_m20,
         sigma_v=ratio * std_v0,
     )
-    funcnm = "ss2"
-    e1 = FpfsExtE1(params, func_name=funcnm)
-    enoise = BiasNoise(e1, cov_mat)
-    res1 = RespG1(e1)
-    rnoise = BiasNoise(res1, cov_mat)
-    return e1, enoise, res1, rnoise
-
-
-def prepare_func_e2(
-    cov_mat,
-    ratio=1.3,
-    c0=4.0,
-    c2=4.0,
-    alpha=0.2,
-    beta=0.8,
-    snr_min=12,
-    r2_min=0.03,
-    r2_max=2.0,
-):
-    std_modes = np.sqrt(np.diagonal(cov_mat))
-    std_m00 = std_modes[did["m00"]]
-    std_m20 = np.sqrt(
-        cov_mat[did["m00"], did["m00"]]
-        + cov_mat[did["m20"], did["m20"]]
-        + cov_mat[did["m00"], did["m20"]]
-        + cov_mat[did["m20"], did["m00"]]
-    )
-    std_v0 = std_modes[did["v0"]]
-    params = FpfsExtParams(
-        C0=c0 * std_m00,
-        C2=c2 * std_m20,
-        alpha=alpha,
-        beta=beta,
-        lower_m00=snr_min * std_m00,
-        lower_r2=r2_min,
-        upper_r2=r2_max,
-        lower_v=ratio * std_v0 * 0.4,
-        sigma_m00=ratio * std_m00,
-        sigma_r2=ratio * std_m20,
-        sigma_v=ratio * std_v0,
-    )
-    funcnm = "ss2"
-    e2 = FpfsExtE2(params, func_name=funcnm)
-    enoise = BiasNoise(e2, cov_mat)
-    res2 = RespG2(e2)
-    rnoise = BiasNoise(res2, cov_mat)
-    return e2, enoise, res2, rnoise
+    # params = FpfsExtParams(
+    #     C0=20,
+    #     C2=20,
+    #     alpha=alpha,
+    #     beta=beta,
+    #     lower_m00=30,
+    #     lower_r2=r2_min,
+    #     upper_r2=r2_max,
+    #     lower_v=2.0 * 0.4,
+    #     sigma_m00=4.0,
+    #     sigma_r2=6.0,
+    #     sigma_v=2.0,
+    # )
+    if g_comp == 1:
+        ell = FpfsExtE1(params, func_name=funcnm)
+        res = RespG1(ell)
+    else:
+        ell = FpfsExtE2(params, func_name=funcnm)
+        res = RespG2(ell)
+    enoise = BiasNoise(ell, cov_mat)
+    rnoise = BiasNoise(res, cov_mat)
+    return ell, enoise, res, rnoise

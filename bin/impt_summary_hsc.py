@@ -140,7 +140,7 @@ def main(pool):
     gver = cparser.get("distortion", "g_test")
     print("Testing for %s . " % gver)
     worker = Worker(args.config, gver=gver)
-    refs = list(range(args.minId, args.maxId))
+    refs = list(range(args.min_id, args.max_id))
     for _ in pool.map(worker.run, refs):
         pass
     del worker, cparser
@@ -151,10 +151,10 @@ def main(pool):
 if __name__ == "__main__":
     parser = ArgumentParser(description="impt fpfs")
     parser.add_argument(
-        "--minId", required=True, type=int, help="minimum id number, e.g. 0"
+        "--min_id", required=True, type=int, help="minimum id number, e.g. 0"
     )
     parser.add_argument(
-        "--maxId", required=True, type=int, help="maximum id number, e.g. 4000"
+        "--max_id", required=True, type=int, help="maximum id number, e.g. 4000"
     )
     parser.add_argument("--config", required=True, type=str, help="configure file name")
     group = parser.add_mutually_exclusive_group()
