@@ -25,7 +25,7 @@ from .default import indexes as did
 from ..base import NlBase
 from .linobs import FpfsLinResponse
 from .utils import tsfunc2, smfunc, ssfunc2, ssfunc3
-from ..perturb import BiasNoise, RespG1, RespG2
+from ..perturb import RespG1, RespG2, BiasNoise, BiasNoiseNull
 
 __all__ = [
     "FpfsExtParams",
@@ -101,6 +101,11 @@ class FpfsExtE1(FpfsObsBase):
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+        # w2 = self.ufunc(
+        #     cat[did["m00"]] + cat[did["m20"]],
+        #     self.params.sigma_r2 * 3,
+        #     self.params.sigma_r2,
+        # )
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
@@ -113,7 +118,7 @@ class FpfsExtE1(FpfsObsBase):
         # M00 (upper_r2 - 1) - M20 > 0
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
         w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
-        wsel = w0 * w2l * w2u
+        wsel = w0 * w2l * w2u  # * w2
 
         # detection
         wdet = 1.0
@@ -192,6 +197,7 @@ def prepare_func_e(
     r2_max=2.0,
     g_comp=1,
     funcnm="ss2",
+    noise_rev=True,
 ):
     if g_comp not in [1, 2]:
         raise ValueError("g_comp can only be 1 or 2")
@@ -236,6 +242,10 @@ def prepare_func_e(
     else:
         ell = FpfsExtE2(params, func_name=funcnm)
         res = RespG2(ell)
-    enoise = BiasNoise(ell, cov_mat)
-    rnoise = BiasNoise(res, cov_mat)
+    if noise_rev:
+        enoise = BiasNoise(ell, cov_mat)
+        rnoise = BiasNoise(res, cov_mat)
+    else:
+        enoise = BiasNoiseNull()
+        rnoise = BiasNoiseNull()
     return ell, enoise, res, rnoise

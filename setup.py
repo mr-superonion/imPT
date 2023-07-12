@@ -15,6 +15,7 @@ scripts = [
     "bin/impt_summary_hsc.py",
     "bin/impt_summary_desc_future.py",
     "bin/impt_std_future.py",
+    "bin/impt_std_future_snr.py",
     "bin/impt_std_future_from_image.py",
     "bin/impt_make_plots.py",
 ]

@@ -15,75 +15,94 @@
 #
 import os
 import gc
+import jax
 import impt
-import time
 import fitsio
 import schwimmbad
 import numpy as np
-import jax.numpy as jnp
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
 
-os.environ["JAX_PLATFORM_NAME"] = "cpu"
-os.environ[
-    "XLA_FLAGS"
-] = "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREAD"] = "1"
+
+def get_processor_count(pool, args):
+    if isinstance(pool, schwimmbad.MPIPool):
+        # MPIPool
+        from mpi4py import MPI
+
+        return MPI.COMM_WORLD.Get_size() - 1
+    elif isinstance(pool, schwimmbad.MultiPool):
+        # MultiPool
+        return args.n_cores
+    else:
+        # SerialPool
+        return 1
 
 
 class Worker(object):
-    def __init__(self, config_name, gver="g1"):
+    def __init__(
+        self,
+        config_name,
+        gver="g1",
+        magcut=27.0,
+        min_id=0,
+        max_id=1000,
+        ncores=1,
+    ):
         cparser = ConfigParser()
         cparser.read(config_name)
+        # survey parameter
+        self.magz = cparser.getfloat("survey", "mag_zero")
+
+        nids = max_id - min_id
+        self.n_per_c = nids // ncores
+        self.mid = nids % ncores
+        self.min_id = min_id
+        self.max_id = max_id
+        self.rest_list = list(np.arange(ncores * self.n_per_c, nids) + min_id)
+        print("number of files per core is: %d" % self.n_per_c)
+
+        # setup processor
+        self.catdir = cparser.get("procsim", "cat_dir")
+        self.sum_dir = cparser.get("procsim", "sum_dir")
+        self.do_noirev = cparser.getboolean("FPFS", "do_noirev")
+        if self.do_noirev:
+            ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+            self.cov_mat = fitsio.read(ncov_fname)
+        else:
+            self.cov_mat = np.zeros((31, 31))
         self.shear_value = cparser.getfloat("distortion", "shear_value")
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
-        cov_fname = cparser.get("FPFS", "mode_cov_name")
-        self.cov_mat = jnp.array(fitsio.read(cov_fname))
-
-        # setup processor
-        self.indir = cparser.get("IO", "input_dir")
-        self.outdir = cparser.get("IO", "output_dir")
-        os.makedirs(self.outdir, exist_ok=True)
-
-        self.rcut = cparser.getint("FPFS", "rcut")
-        # This task change the cut on one observable and see how the biases changes.
+        # This task change the cut on one observable and see how the biases
+        # changes.
         # Here is  the observable used for test
-        self.upper_mag = cparser.getfloat("FPFS", "cut_mag")
+        self.upper_mag = magcut
         self.lower_m00 = 10 ** ((self.magz - self.upper_mag) / 2.5)
-        self.lower_r2 = cparser.getfloat("FPFS", "cut_r2")
-
-        if not os.path.exists(self.indir):
-            raise FileNotFoundError("Cannot find input directory: %s!" % self.indir)
-        print("The input directory for galaxy shear catalogs is %s. " % self.indir)
         # setup WL distortion parameter
         self.gver = gver
+        self.ofname = os.path.join(
+            self.sum_dir,
+            "bin_%s.fits" % (self.upper_mag),
+        )
         return
 
     def prepare_functions(self):
         params = impt.fpfs.FpfsParams(
-            Const=20,
+            Const=10.0,
             lower_m00=self.lower_m00,
-            sigma_m00=0.2,
-            lower_r2=self.lower_r2,
-            upper_r2=200,
-            sigma_r2=0.4,
-            sigma_v=0.2,
+            lower_r2=0.03,
+            upper_r2=2.0,
+            lower_v=0.10,
+            sigma_m00=0.4,
+            sigma_r2=0.6,
+            sigma_v=0.15,
         )
         funcnm = "ss2"
-        e1_impt = impt.fpfs.FpfsE1(params, func_name=funcnm)
-        w_det = impt.fpfs.FpfsWeightDetect(params, func_name=funcnm)
-        w_sel = impt.fpfs.FpfsWeightSelect(params, func_name=funcnm)
-
-        # ellipticity
-        e1 = e1_impt * w_sel * w_det
+        e1 = impt.fpfs.FpfsWeightE1(params, func_name=funcnm)
         enoise = impt.BiasNoise(e1, self.cov_mat)
         res1 = impt.RespG1(e1)
         rnoise = impt.BiasNoise(res1, self.cov_mat)
-        gc.collect()
         return e1, enoise, res1, rnoise
 
     def get_sum_e_r(self, in_nm, e1, enoise, res1, rnoise):
@@ -91,72 +110,88 @@ class Worker(object):
             in_nm
         ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
         mm = impt.fpfs.read_catalog(in_nm)
-        print("number of galaxies: %d" % len(mm))
-        e1_sum = jnp.sum(e1.evaluate(mm))
-        e1_sum = e1_sum - jnp.sum(enoise.evaluate(mm))
+        # noise bias
 
-        # shear response
-        r1_sum = jnp.sum(res1.evaluate(mm))
-        r1_sum = r1_sum - jnp.sum(rnoise.evaluate(mm))
+        def fune(carry, ss):
+            y = e1._obs_func(ss) - enoise._obs_func(ss)
+            return carry + y, y
+
+        def funr(carry, ss):
+            y = res1._obs_func(ss) - rnoise._obs_func(ss)
+            return carry + y, y
+
+        e1_sum, _ = jax.lax.scan(fune, 0.0, mm)
+        r1_sum, _ = jax.lax.scan(funr, 0.0, mm)
         del mm
+        gc.collect()
         return e1_sum, r1_sum
 
-    def run(self, ind0):
-        out_nm = os.path.join(self.outdir, "%04d.fits" % ind0)
-        if os.path.isfile(out_nm):
-            print("Already has the output file")
-            return
+    def get_range(self, icore):
+        ibeg = self.min_id + icore * self.n_per_c
+        iend = min(ibeg + self.n_per_c, self.max_id)
+        id_range = list(range(ibeg, iend))
+        if icore < len(self.rest_list):
+            id_range.append(self.rest_list[icore])
+        return id_range
 
-        start_time = time.time()
-        e1, enoise, res1, rnoise = self.prepare_functions()
-        pp = "cut%d" % self.rcut
-        in_nm1 = os.path.join(
-            self.indir, "fpfs-%s-%04d-%s-0000.fits" % (pp, ind0, self.gver)
-        )
-        sum_e1_1, sum_r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
-        gc.collect()
+    def run(self, icore):
+        id_range = self.get_range(icore)
+        out = np.empty((len(id_range), 3))
+        print("start core: %d, with id: %s" % (icore, id_range))
+        for icount, ifield in enumerate(id_range):
+            e1, enoise, res1, rnoise = self.prepare_functions()
+            in_nm1 = os.path.join(
+                self.catdir,
+                "src_%05d-%s_01-rot_0.fits" % (ifield, self.gver),
+            )
+            e1_1, r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
 
-        in_nm2 = os.path.join(
-            self.indir, "fpfs-%s-%04d-%s-2222.fits" % (pp, ind0, self.gver)
-        )
-        sum_e1_2, sum_r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
-        del e1, enoise, res1, rnoise
-        gc.collect()
-        print("--- computational time: %.2f seconds ---" % (time.time() - start_time))
-
-        out = np.zeros((4, 1))
-        # names= [('cut','<f8'), ('de','<f8'), ('eA','<f8') ('res','<f8')]
-        out[0, 0] = self.upper_mag
-        out[1, 0] = sum_e1_2 - sum_e1_1
-        out[2, 0] = (sum_e1_1 + sum_e1_2) / 2.0
-        out[3, 0] = (sum_r1_1 + sum_r1_2) / 2.0
-        fitsio.write(out_nm, out)
-        return
-
-
-def main(pool):
-    cparser = ConfigParser()
-    cparser.read(args.config)
-    gver = cparser.get("distortion", "g_test")
-    print("Testing for %s . " % gver)
-    worker = Worker(args.config, gver=gver)
-    refs = list(range(args.min_id, args.max_id))
-    for _ in pool.map(worker.run, refs):
-        pass
-    del worker, cparser
-    pool.close()
-    return
+            in_nm2 = os.path.join(
+                self.catdir,
+                "src_%05d-%s_00-rot_0.fits" % (ifield, self.gver),
+            )
+            e1_2, r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
+            out[icount, 0] = e1_1 - e1_2
+            out[icount, 1] = (e1_1 + e1_2) / 2.0
+            out[icount, 2] = (r1_1 + r1_2) / 2.0
+            del e1, enoise, res1, rnoise
+            jax.clear_backends()
+            gc.collect()
+        return out
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="impt fpfs")
+    parser = ArgumentParser(description="fpfs procsim")
     parser.add_argument(
-        "--min_id", required=True, type=int, help="minimum id number, e.g. 0"
+        "--runid",
+        default=0,
+        type=int,
+        help="id number, e.g. 0",
     )
     parser.add_argument(
-        "--max_id", required=True, type=int, help="maximum id number, e.g. 4000"
+        "--min_id",
+        default=0,
+        type=int,
+        help="id number, e.g. 0",
     )
-    parser.add_argument("--config", required=True, type=str, help="configure file name")
+    parser.add_argument(
+        "--max_id",
+        default=1000,
+        type=int,
+        help="id number, e.g. 1000",
+    )
+    parser.add_argument(
+        "--magcut",
+        default=27.0,
+        type=float,
+        help="id number, e.g. 0",
+    )
+    parser.add_argument(
+        "--config",
+        required=True,
+        type=str,
+        help="configure file name",
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "--ncores",
@@ -173,5 +208,26 @@ if __name__ == "__main__":
         help="Run with MPI.",
     )
     args = parser.parse_args()
+    cparser = ConfigParser()
+    cparser.read(args.config)
+    shear_value = cparser.getfloat("distortion", "shear_value")
+
     pool = schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores)
-    main(pool)
+    ncores = get_processor_count(pool, args)
+    assert isinstance(ncores, int)
+    core_list = np.arange(ncores)
+    worker = Worker(
+        args.config,
+        gver="g1",
+        magcut=args.magcut,
+        min_id=args.min_id,
+        max_id=args.max_id,
+        ncores=ncores,
+    )
+    summary_dirname = worker.sum_dir
+    os.makedirs(summary_dirname, exist_ok=True)
+
+    olist = pool.map(worker.run, core_list)
+    pool.close()
+    outcome = np.vstack(olist)
+    fitsio.write(worker.ofname, outcome)
