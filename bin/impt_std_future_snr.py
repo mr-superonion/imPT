@@ -30,31 +30,6 @@ logging.getLogger().setLevel(logging.CRITICAL)
 logging.getLogger("jax").setLevel(logging.CRITICAL)
 
 
-def expand_2d_slice(point, dim1, dim2, bds, grid_size):
-    # Validate input
-    if len(point) != 5:
-        raise ValueError("Input point must be 5D.")
-    if dim1 not in range(5) or dim2 not in range(5):
-        raise ValueError("Dimension indices must be in the range 0-4.")
-
-    # Create a grid for the specified dimensions
-    xrange = bds[dim1]
-    yrange = bds[dim2]
-    x = np.linspace(xrange[0], xrange[1], grid_size)
-    y = np.linspace(yrange[0], yrange[1], grid_size)
-    xv, yv = np.meshgrid(x, y)
-
-    # Replicate the point in the 5D space
-    replicated_point = np.tile(point, (grid_size, grid_size, 1))
-
-    # Replace the dimensions with the grid values
-    replicated_point[:, :, dim1] = xv
-    replicated_point[:, :, dim2] = yv
-
-    # Return the list of coordinates at the grids
-    return replicated_point.reshape(-1, 5)
-
-
 def get_processor_count(pool, args):
     if isinstance(pool, schwimmbad.MPIPool):
         # MPIPool
@@ -81,6 +56,7 @@ class Worker(object):
         c2=4.0,
         alpha=0.2,
         beta=0.8,
+        snr_min=12,
     ):
         cparser = ConfigParser()
         cparser.read(config_name)
@@ -102,6 +78,7 @@ class Worker(object):
         self.c2 = c2
         self.alpha = alpha
         self.beta = beta
+        self.snr_min = snr_min
         return
 
     def get_range(self, icore):
@@ -113,8 +90,9 @@ class Worker(object):
         return id_range
 
     def get_sum_e_r(self, in_nm, e1, enoise, res1, rnoise):
-        if not os.path.isfile(in_nm):
-            print("Cannot find input galaxy shear catalogs : %s " % (in_nm))
+        assert os.path.isfile(
+            in_nm
+        ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
         mm = impt.fpfs.read_catalog(in_nm)
         # noise bias
 
@@ -144,6 +122,7 @@ class Worker(object):
                 c2=self.c2,
                 alpha=self.alpha,
                 beta=self.beta,
+                snr_min=self.snr_min,
                 g_comp=1,
             )
             in_nm1 = os.path.join(
@@ -158,19 +137,18 @@ class Worker(object):
         return out
 
 
-def process(args, pars):
-    print("Current point: %s" % pars)
+def process(args, pars, snr_min):
     params = {
         "ratio": pars[0],
         "c0": pars[1],
         "c2": pars[2],
         "alpha": pars[3],
         "beta": pars[4],
+        "snr_min": snr_min,
     }
     with schwimmbad.choose_pool(mpi=args.mpi, processes=args.n_cores) as pool:
         ncores = get_processor_count(pool, args)
-        if not isinstance(ncores, int):
-            raise TypeError("ncores should be integer")
+        assert isinstance(ncores, int)
         core_list = np.arange(ncores)
         worker = Worker(
             args.config,
@@ -180,7 +158,6 @@ def process(args, pars):
             **params,
         )
         outcome = np.vstack(list(pool.map(worker.run, core_list)))
-        print(outcome.shape)
         std = np.std(outcome[:, 0]) / np.average(outcome[:, 1])
         print("std: %s" % std)
     return std
@@ -191,12 +168,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         required=True,
-        type=str,
-        help="configure file name",
-    )
-    parser.add_argument(
-        "--optimize",
-        default="True",
         type=str,
         help="configure file name",
     )
@@ -228,47 +199,22 @@ if __name__ == "__main__":
         help="Run with MPI.",
     )
     args = parser.parse_args()
-    process_opt = lambda _: process(args=args, pars=_)
 
     cparser = ConfigParser()
     cparser.read(args.config)
     sum_dir = cparser.get("procsim", "sum_dir")
-
-    if args.optimize == "True":
-        from scipy.optimize import minimize
-
-        bounds = [
-            (0.5, 2.5),
-            (2.0, 40.0),
-            (2.0, 40.0),
-            (0.2, 1.2),
-            (0.2, 1.2),
-        ]
-        x0 = np.array([1.52, 2.46, 22.74, 0.35, 0.92])
-        op = {"maxiter": 100, "disp": False, "xtol": 1e-1}
-        res = minimize(
-            process_opt,
-            x0,
-            bounds=bounds,
-            method="Nelder-Mead",
-        )
-    if args.optimize == "False":
-        bounds = [
-            (1.3, 1.7),
-            (1.0, 8.0),
-            (10, 40),
-            (0.45, 1.1),
-            (0.0, 0.85),
-        ]
-        x0 = np.array([1.596, 2.46, 22.74, 0.83, 0.18])
-        dim1, dim2 = 1, 2
-        gsize = 15
-        # dim1, dim2 = 3, 4
-        # gsize = 20
-        x_list = expand_2d_slice(x0, dim1, dim2, bounds, gsize)
-        outcomes = np.stack(list(map(process_opt, x_list)))
-        outcomes = np.vstack([x_list.T, outcomes])
-        ofname = os.path.join(sum_dir, "%d_%d_lrange_g%d.fits" % (dim1, dim2, gsize))
-        fitsio.write(ofname, outcomes)
-    else:
-        raise ValueError("optimize can only be 'True' or 'False'")
+    # FPFS parameters
+    ratio = cparser.getfloat("FPFS", "ratio")
+    c0 = cparser.getfloat("FPFS", "c0")
+    c2 = cparser.getfloat("FPFS", "c2")
+    alpha = cparser.getfloat("FPFS", "alpha")
+    beta = cparser.getfloat("FPFS", "beta")
+    pp = np.array([ratio, c0, c2, alpha, beta])
+    process_opt = lambda x: process(args=args, pars=pp, snr_min=x)
+    # snr_list = np.array([10, 12, 14.4, 17.28])  # , 20.736, 24.883])
+    snr_list = np.logspace(1.02, 1.5, 10)
+    outcomes = np.stack(list(map(process_opt, snr_list)))
+    outcomes = np.vstack([snr_list.T, outcomes])
+    print(outcomes)
+    ofname = os.path.join(sum_dir, "snrcuts.fits")
+    fitsio.write(ofname, outcomes)

@@ -91,7 +91,7 @@ class BiasNoise(NlBase):
     """A Class to derive the second-order noise perturbation function."""
 
     def __init__(self, parent, noise_cov):
-        """Initializes shear response object using a parent_obj object and
+        """Initializes noise response object using a parent_obj object and
         a noise covariance matrix.
         """
         if not hasattr(parent, "_obs_hessian_func"):
@@ -116,3 +116,17 @@ class BiasNoise(NlBase):
             / 2.0
         )
         return res
+
+
+class BiasNoiseNull:
+    """A Class disabling noise bias correction."""
+
+    def __init__(self):
+        """Initializes a null noise response object"""
+        self._obs_func = self._base_func
+        return
+
+    # @partial(jit, static_argnums=(0,))
+    def _base_func(self, x):
+        """Returns zero"""
+        return 0.0

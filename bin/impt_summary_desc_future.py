@@ -17,6 +17,7 @@ import os
 import gc
 import jax
 import impt
+import time
 import fitsio
 import schwimmbad
 import numpy as np
@@ -72,6 +73,7 @@ class Worker(object):
         self.c2 = cparser.getfloat("FPFS", "c2")
         self.alpha = cparser.getfloat("FPFS", "alpha")
         self.beta = cparser.getfloat("FPFS", "beta")
+        self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
         # This task change the cut on one observable and see how the biases
@@ -83,7 +85,7 @@ class Worker(object):
         self.gver = gver
         self.ofname = os.path.join(
             self.sum_dir,
-            "bin_%s.fits" % (self.upper_mag),
+            "bin_%s_2.fits" % (self.upper_mag),
         )
         return
 
@@ -117,6 +119,7 @@ class Worker(object):
         return id_range
 
     def run(self, icore):
+        start_time = time.time()
         id_range = self.get_range(icore)
         out = np.zeros((len(id_range), 4))
         print("start core: %d, with id: %s" % (icore, id_range))
@@ -130,6 +133,7 @@ class Worker(object):
                     c2=self.c2,
                     alpha=self.alpha,
                     beta=self.beta,
+                    noise_rev=self.noise_rev,
                 )
                 in_nm1 = os.path.join(
                     self.catdir,
@@ -142,12 +146,15 @@ class Worker(object):
                 )
                 e1_2, r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
                 out[icount, 0] = ifield
-                out[icount, 1] = out[icount, 1] + (e1_1 - e1_2)
+                out[icount, 1] = out[icount, 1] + (e1_2 - e1_1)
                 out[icount, 2] = out[icount, 2] + (e1_1 + e1_2) / 2.0
                 out[icount, 3] = out[icount, 3] + (r1_1 + r1_2) / 2.0
                 del e1, enoise, res1, rnoise
                 jax.clear_backends()
                 gc.collect()
+        end_time = time.time()
+        elapsed_time = (end_time - start_time) / 4.0
+        print(f"Elapsed time: {elapsed_time} seconds")
         return out
 
 

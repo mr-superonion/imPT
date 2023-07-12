@@ -13,7 +13,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
-import os
+import glob
 import numpy as np
 import astropy.io.fits as pyfits
 
@@ -35,11 +35,10 @@ cparser.read(args.config)
 sum_dir = cparser.get("procsim", "sum_dir")
 shear = cparser.getfloat("distortion", "shear_value")
 
-for mag in [24, 24.5, 25, 25.5, 26.0, 26.5, 27.0, 27.5]:
-    fname = "%s/bin_%.1f.fits" % (sum_dir, mag)
-    if not os.path.isfile(fname):
-        continue
-    print("magnitude is: %.1f" % mag)
+flist = glob.glob("%s/bin_*.*.fits" % (sum_dir))
+for fname in flist:
+    mag = fname.split("/")[-1].split("bin_")[-1].split(".fits")[0]
+    print("magnitude is: %s" % mag)
     a = pyfits.getdata(fname)
     a = a[np.argsort(a[:, 0])]
     nsim = a.shape[0]
