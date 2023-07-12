@@ -4,8 +4,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Fast estimator for Lensing Perturbation (`imPT`) from astronomical images
-using the auto differentiating function of jax.
+Fast estimator for Lensing Perturbation (`impt`) on astronomical images using
+the auto differentiating function of jax. The code need to be combined with
+image compressor (e.g. [FPFS](https://github.com/mr-superonion/FPFS)).
 
 A simple code to compute the response to lensing perturbations and remove the
 bias due to the perturbation from image noise.
