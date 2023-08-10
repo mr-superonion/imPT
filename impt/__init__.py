@@ -5,12 +5,12 @@ from .__version__ import __version__
 from .perturb import *
 from . import fpfs
 from . import fpfs4
+from . import io
 
 # We need accuracy is below 1e-6
 from jax import config
 
 config.update("jax_enable_x64", True)
-os.environ["JAX_PLATFORM_NAME"] = "cpu"
 
-__all__ = ["fpfs", "fpfs4"]
+__all__ = ["fpfs", "fpfs4", "io"]
 __all__ += perturb.__all__
