@@ -5,7 +5,6 @@ from .__version__ import __version__
 from .perturb import *
 from . import fpfs
 from . import fpfs4
-from . import io
 
 # We need accuracy is below 1e-6
 from jax import config
