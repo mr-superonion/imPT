@@ -12,5 +12,5 @@ from jax import config
 
 config.update("jax_enable_x64", True)
 
-__all__ = ["fpfs", "fpfs4", "io"]
+__all__ = ["fpfs", "fpfs4"]
 __all__ += perturb.__all__

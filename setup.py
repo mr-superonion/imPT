@@ -34,7 +34,6 @@ setup(
         "jaxlib>=0.4.9",
         "flax",
         "fitsio",
-        "pre-commit",
     ],
     packages=find_packages(),
     scripts=scripts,
