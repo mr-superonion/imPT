@@ -6,10 +6,8 @@
 
 Fast estimator for Lensing Perturbation (`impt`) on astronomical images using
 the auto differentiating function of jax. The code need to be combined with
-image compressor (e.g. [FPFS](https://github.com/mr-superonion/FPFS)).
-
-A simple code to compute the response to lensing perturbations and remove the
-bias due to the perturbation from image noise.
+estimator (e.g. [FPFS](https://github.com/mr-superonion/FPFS)) compressing image
+to catalog. It is a simple code to infer shear from the catalog with correction for noise bias
 
 
 ## Installation

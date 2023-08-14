@@ -10,7 +10,6 @@ from . import fpfs4
 from jax import config
 
 config.update("jax_enable_x64", True)
-os.environ["JAX_PLATFORM_NAME"] = "cpu"
 
 __all__ = ["fpfs", "fpfs4"]
 __all__ += perturb.__all__
