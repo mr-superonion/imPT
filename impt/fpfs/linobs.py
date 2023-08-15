@@ -38,11 +38,14 @@ or take it as an example to develop new system
 # of Observables
 
 
-def read_catalog(fname):
+def read_catalog(fname, nnord=4):
     x = fitsread(fname)
     if x.dtype.names is not None:
         x = x[col_names]
         x = rfn.structured_to_unstructured(x, copy=False)
+    elif nnord == 6:
+        # Hard coding the col index
+        x = jnp.delete(x, 7, axis=1)
     return jnp.array(x, dtype=jnp.float64)
 
 
