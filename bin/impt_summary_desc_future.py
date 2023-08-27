@@ -85,7 +85,7 @@ class Worker(object):
         self.gver = gver
         self.ofname = os.path.join(
             self.sum_dir,
-            "bin_%s_2.fits" % (self.upper_mag),
+            "bin_%s.fits" % (self.upper_mag),
         )
         return
 
@@ -135,14 +135,15 @@ class Worker(object):
                     beta=self.beta,
                     noise_rev=self.noise_rev,
                 )
+                b = "a"
                 in_nm1 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-0_rot%d.fits" % (ifield, self.gver, irot),
+                    "src-%05d_%s-0_rot%d_%s.fits" % (ifield, self.gver, irot, b),
                 )
                 e1_1, r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
                 in_nm2 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-1_rot%d.fits" % (ifield, self.gver, irot),
+                    "src-%05d_%s-1_rot%d_%s.fits" % (ifield, self.gver, irot, b),
                 )
                 e1_2, r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
                 out[icount, 0] = ifield
