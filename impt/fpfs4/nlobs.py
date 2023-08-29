@@ -35,6 +35,8 @@ __all__ = [
     "FpfsE42",
     "FpfsWeightSelect",
     "FpfsWeightDetect",
+    "FpfsWeightSelect4",
+    "FpfsWeightDetect4",
     "FpfsWeightE1",
     "FpfsWeightE2",
     "FpfsWeightE41",
@@ -199,12 +201,15 @@ class FpfsWeightDetect4(FpfsObsBase):
 
     @partial(jit, static_argnums=(0,))
     def _base_func(self, cat):
-        out = 1.0
-        for i in range(npeak):
-            # v_i - M00 * lower_v > sigma_v
-            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
-            out = out * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
-        return out
+        wdet = 1.0
+        for i in range(0, npeak):
+            # v_i > lower_v
+            wdet = wdet * self.ufunc(
+                cat[did["v%d" % i]],
+                self.params.lower_v,
+                self.params.sigma_v,
+            )
+        return wdet
 
 
 class FpfsE1(FpfsObsBase):

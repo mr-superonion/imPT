@@ -21,7 +21,8 @@ import time
 import fitsio
 import schwimmbad
 import numpy as np
-from impt.fpfs.future import prepare_func_e
+from impt.fpfs.future import prepare_func_e as prepare_func_e_2
+from impt.fpfs4.future import prepare_func_e as prepare_func_e_4
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -123,18 +124,22 @@ class Worker(object):
         id_range = self.get_range(icore)
         out = np.zeros((len(id_range), 4))
         print("start core: %d, with id: %s" % (icore, id_range))
+        params = dict(
+            cov_mat=self.cov_mat,
+            snr_min=self.lower_m00 / np.sqrt(self.cov_mat[0, 0]),
+            ratio=self.ratio,
+            c0=self.c0,
+            c2=self.c2,
+            alpha=self.alpha,
+            beta=self.beta,
+            noise_rev=self.noise_rev,
+        )
         for icount, ifield in enumerate(id_range):
             for irot in range(2):
-                e1, enoise, res1, rnoise = prepare_func_e(
-                    cov_mat=self.cov_mat,
-                    snr_min=self.lower_m00 / np.sqrt(self.cov_mat[0, 0]),
-                    ratio=self.ratio,
-                    c0=self.c0,
-                    c2=self.c2,
-                    alpha=self.alpha,
-                    beta=self.beta,
-                    noise_rev=self.noise_rev,
-                )
+                if self.nnord == 4:
+                    e1, enoise, res1, rnoise = prepare_func_e_2(**params)
+                else:
+                    e1, enoise, res1, rnoise = prepare_func_e_4(**params)
                 in_nm1 = os.path.join(
                     self.catdir,
                     "src-%05d_%s-0_rot%d.fits" % (ifield, self.gver, irot),
