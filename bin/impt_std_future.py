@@ -20,7 +20,8 @@ import impt
 import fitsio
 import schwimmbad
 import numpy as np
-from impt.fpfs.future import prepare_func_e
+from impt.fpfs.future import prepare_func_e as prepare_func_e_2
+from impt.fpfs4.future import prepare_func_e as prepare_func_e_4
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -95,8 +96,28 @@ class Worker(object):
 
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
-        ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
-        self.cov_mat = fitsio.read(ncov_fname)
+        self.sum_dir = cparser.get("procsim", "sum_dir")
+        self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
+
+        # order of shear estimator
+        self.nnord = cparser.getint("FPFS", "nnord", fallback=4)
+        if self.nnord not in [4, 6]:
+            raise ValueError(
+                "Only support for nnord= 4 or nnord=6, but your input\
+                    is nnord=%d"
+                % self.nnord
+            )
+        cov_dim = 31 if self.nnord == 4 else 32
+        if self.noise_rev:
+            ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+            self.cov_mat = np.array(fitsio.read(ncov_fname))
+            if self.nnord == 4:
+                mask = np.ones(cov_dim + 1, bool)
+                mask[7] = False
+                self.cov_mat = self.cov_mat[mask, :][:, mask]
+        else:
+            self.cov_mat = np.zeros((cov_dim, cov_dim))
+
         self.ratio = ratio
         self.c0 = c0
         self.c2 = c2
@@ -113,9 +134,13 @@ class Worker(object):
         return id_range
 
     def get_sum_e_r(self, in_nm, e1, enoise, res1, rnoise):
-        if not os.path.isfile(in_nm):
-            print("Cannot find input galaxy shear catalogs : %s " % (in_nm))
-        mm = impt.fpfs.read_catalog(in_nm)
+        assert os.path.isfile(
+            in_nm
+        ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
+        if self.nnord == 4:
+            mm = impt.fpfs.read_catalog(in_nm, nnord=6)
+        else:
+            mm = impt.fpfs4.read_catalog(in_nm)
         # noise bias
 
         def fune(carry, ss):
@@ -137,18 +162,29 @@ class Worker(object):
         out = np.empty((len(id_range), 2))
         # print("start core: %d, with id: %s" % (icore, id_range))
         for icount, ifield in enumerate(id_range):
-            e1, enoise, res1, rnoise = prepare_func_e(
-                cov_mat=self.cov_mat,
-                ratio=self.ratio,
-                c0=self.c0,
-                c2=self.c2,
-                alpha=self.alpha,
-                beta=self.beta,
-                g_comp=1,
-            )
+            if self.nnord == 4:
+                e1, enoise, res1, rnoise = prepare_func_e_2(
+                    cov_mat=self.cov_mat,
+                    ratio=self.ratio,
+                    c0=self.c0,
+                    c2=self.c2,
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    g_comp=1,
+                )
+            else:
+                e1, enoise, res1, rnoise = prepare_func_e_4(
+                    cov_mat=self.cov_mat,
+                    ratio=self.ratio,
+                    c0=self.c0,
+                    c2=self.c2,
+                    alpha=self.alpha,
+                    beta=self.beta,
+                    g_comp=1,
+                )
             in_nm1 = os.path.join(
                 self.catdir,
-                "src-%05d_g1-1_rot0.fits" % (ifield),
+                "src-%05d_g1-1_rot0_a.fits" % (ifield),
             )
             ell, e_r = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
             out[icount, 0] = ell
