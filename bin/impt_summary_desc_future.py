@@ -66,15 +66,34 @@ class Worker(object):
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
         self.sum_dir = cparser.get("procsim", "sum_dir")
-        ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
-        self.cov_mat = fitsio.read(ncov_fname)
+        self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
+
+        # order of shear estimator
+        self.nnord = cparser.getint("FPFS", "nnord", fallback=4)
+        if self.nnord not in [4, 6]:
+            raise ValueError(
+                "Only support for nnord= 4 or nnord=6, but your input\
+                    is nnord=%d"
+                % self.nnord
+            )
+        cov_dim = 31 if self.nnord == 4 else 32
+        if self.noise_rev:
+            ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+            self.cov_mat = np.array(fitsio.read(ncov_fname))
+            if self.nnord == 4:
+                mask = np.ones(cov_dim + 1, bool)
+                mask[7] = False
+                self.cov_mat = self.cov_mat[mask, :][:, mask]
+        else:
+            self.cov_mat = np.zeros((cov_dim, cov_dim))
+
         # FPFS parameters
         self.ratio = cparser.getfloat("FPFS", "ratio")
         self.c0 = cparser.getfloat("FPFS", "c0")
         self.c2 = cparser.getfloat("FPFS", "c2")
         self.alpha = cparser.getfloat("FPFS", "alpha")
         self.beta = cparser.getfloat("FPFS", "beta")
-        self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
+
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
         # This task change the cut on one observable and see how the biases
@@ -86,7 +105,7 @@ class Worker(object):
         self.gver = gver
         self.ofname = os.path.join(
             self.sum_dir,
-            "bin_%s_2.fits" % (self.upper_mag),
+            "bin_%s.fits" % (self.upper_mag),
         )
         return
 
@@ -94,7 +113,10 @@ class Worker(object):
         assert os.path.isfile(
             in_nm
         ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
-        mm = impt.fpfs.read_catalog(in_nm)
+        if self.nnord == 4:
+            mm = impt.fpfs.read_catalog(in_nm, nnord=6)
+        else:
+            mm = impt.fpfs4.read_catalog(in_nm)
         # noise bias
 
         def fune(carry, ss):
@@ -142,12 +164,12 @@ class Worker(object):
                     e1, enoise, res1, rnoise = prepare_func_e_4(**params)
                 in_nm1 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-0_rot%d.fits" % (ifield, self.gver, irot),
+                    "src-%05d_%s-0_rot%d_a.fits" % (ifield, self.gver, irot),
                 )
                 e1_1, r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
                 in_nm2 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-1_rot%d.fits" % (ifield, self.gver, irot),
+                    "src-%05d_%s-1_rot%d_a.fits" % (ifield, self.gver, irot),
                 )
                 e1_2, r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
                 out[icount, 0] = ifield

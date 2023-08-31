@@ -20,7 +20,8 @@ import impt
 import fitsio
 import schwimmbad
 import numpy as np
-from impt.fpfs.future import prepare_func_e
+from impt.fpfs.future import prepare_func_e as prepare_func_e_2
+from impt.fpfs4.future import prepare_func_e as prepare_func_e_4
 
 from argparse import ArgumentParser
 from configparser import ConfigParser
@@ -71,8 +72,28 @@ class Worker(object):
 
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
-        ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
-        self.cov_mat = fitsio.read(ncov_fname)
+        self.sum_dir = cparser.get("procsim", "sum_dir")
+        self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
+
+        # order of shear estimator
+        self.nnord = cparser.getint("FPFS", "nnord", fallback=4)
+        if self.nnord not in [4, 6]:
+            raise ValueError(
+                "Only support for nnord= 4 or nnord=6, but your input\
+                    is nnord=%d"
+                % self.nnord
+            )
+        cov_dim = 31 if self.nnord == 4 else 32
+        if self.noise_rev:
+            ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+            self.cov_mat = np.array(fitsio.read(ncov_fname))
+            if self.nnord == 4:
+                mask = np.ones(cov_dim + 1, bool)
+                mask[7] = False
+                self.cov_mat = self.cov_mat[mask, :][:, mask]
+        else:
+            self.cov_mat = np.zeros((cov_dim, cov_dim))
+
         self.ratio = ratio
         self.c0 = c0
         self.c2 = c2
@@ -93,7 +114,10 @@ class Worker(object):
         assert os.path.isfile(
             in_nm
         ), "Cannot find input galaxy shear catalogs : %s " % (in_nm)
-        mm = impt.fpfs.read_catalog(in_nm)
+        if self.nnord == 4:
+            mm = impt.fpfs.read_catalog(in_nm, nnord=6)
+        else:
+            mm = impt.fpfs4.read_catalog(in_nm)
         # noise bias
 
         def fune(carry, ss):
@@ -114,20 +138,24 @@ class Worker(object):
         id_range = self.get_range(icore)
         out = np.empty((len(id_range), 2))
         # print("start core: %d, with id: %s" % (icore, id_range))
+        params = dict(
+            cov_mat=self.cov_mat,
+            snr_min=self.snr_min,
+            ratio=self.ratio,
+            c0=self.c0,
+            c2=self.c2,
+            alpha=self.alpha,
+            beta=self.beta,
+            noise_rev=self.noise_rev,
+        )
         for icount, ifield in enumerate(id_range):
-            e1, enoise, res1, rnoise = prepare_func_e(
-                cov_mat=self.cov_mat,
-                ratio=self.ratio,
-                c0=self.c0,
-                c2=self.c2,
-                alpha=self.alpha,
-                beta=self.beta,
-                snr_min=self.snr_min,
-                g_comp=1,
-            )
+            if self.nnord == 4:
+                e1, enoise, res1, rnoise = prepare_func_e_2(**params)
+            else:
+                e1, enoise, res1, rnoise = prepare_func_e_4(**params)
             in_nm1 = os.path.join(
                 self.catdir,
-                "src-%05d_g1-1_rot0.fits" % (ifield),
+                "src-%05d_g1-1_rot0_a.fits" % (ifield),
             )
             ell, e_r = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
             out[icount, 0] = ell
@@ -157,10 +185,12 @@ def process(args, pars, snr_min):
             ncores=ncores,
             **params,
         )
-        outcome = np.vstack(list(pool.map(worker.run, core_list)))
-        std = np.std(outcome[:, 0]) / np.average(outcome[:, 1])
-        print("std: %s" % std)
-    return std
+        # outcome = np.vstack(list(pool.map(worker.run, core_list)))
+        outcome = np.concatenate(pool.map(worker.run, core_list))
+        print(outcome.shape)
+        # std = np.std(outcome[:, 0]) / np.average(outcome[:, 1])
+        # print("std: %s" % std)
+    return outcome
 
 
 if __name__ == "__main__":
@@ -179,7 +209,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--max_id",
-        default=100,
+        default=500,
         type=int,
         help="id number, e.g. 1000",
     )
@@ -214,7 +244,6 @@ if __name__ == "__main__":
     # snr_list = np.array([10, 12, 14.4, 17.28])  # , 20.736, 24.883])
     snr_list = np.logspace(1.02, 1.5, 10)
     outcomes = np.stack(list(map(process_opt, snr_list)))
-    outcomes = np.vstack([snr_list.T, outcomes])
-    print(outcomes)
+    # outcomes = np.vstack([snr_list.T, outcomes])
     ofname = os.path.join(sum_dir, "snrcuts.fits")
     fitsio.write(ofname, outcomes)
