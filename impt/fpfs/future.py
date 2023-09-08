@@ -62,6 +62,9 @@ class FpfsExtParams(struct.PyTreeNode):
     # softening parameter for cut on peak
     sigma_v: float = struct.field(pytree_node=False, default=0.2)
 
+    sigma_min: float = struct.field(pytree_node=False, default=0.01)
+
+
 
 class FpfsObsBase(NlBase):
     def __init__(self, params, parent=None, func_name="ts2"):
@@ -198,6 +201,7 @@ def prepare_func_e(
     g_comp=1,
     funcnm="ss2",
     noise_rev=True,
+    sigma_min=0.01,
 ):
     if g_comp not in [1, 2]:
         raise ValueError("g_comp can only be 1 or 2")
@@ -219,23 +223,10 @@ def prepare_func_e(
         lower_r2=r2_min,
         upper_r2=r2_max,
         lower_v=ratio * std_v0 * 0.4,
-        sigma_m00=ratio * std_m00,
-        sigma_r2=ratio * std_m20,
-        sigma_v=ratio * std_v0,
+        sigma_m00=ratio * std_m00 + sigma_min,
+        sigma_r2=ratio * std_m20 + sigma_min,
+        sigma_v=ratio * std_v0 + sigma_min,
     )
-    # params = FpfsExtParams(
-    #     C0=20,
-    #     C2=20,
-    #     alpha=alpha,
-    #     beta=beta,
-    #     lower_m00=30,
-    #     lower_r2=r2_min,
-    #     upper_r2=r2_max,
-    #     lower_v=2.0 * 0.4,
-    #     sigma_m00=4.0,
-    #     sigma_r2=6.0,
-    #     sigma_v=2.0,
-    # )
     if g_comp == 1:
         ell = FpfsExtE1(params, func_name=funcnm)
         res = RespG1(ell)
