@@ -65,7 +65,6 @@ class FpfsExtParams(struct.PyTreeNode):
     sigma_min: float = struct.field(pytree_node=False, default=0.01)
 
 
-
 class FpfsObsBase(NlBase):
     def __init__(self, params, parent=None, func_name="ts2"):
         if not isinstance(params, FpfsExtParams):
