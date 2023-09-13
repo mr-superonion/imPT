@@ -1,4 +1,5 @@
 # imPT
+----
 [![Python package](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml/badge.svg)](https://github.com/mr-superonion/lensPT/actions/workflows/python-package.yml)
 [![Documentation Status](https://readthedocs.org/projects/impt/badge/?version=latest)](https://impt.readthedocs.io/en/latest/?badge=latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -9,6 +10,7 @@ the auto differentiating function of jax. The code need to be combined with
 estimator (e.g. [FPFS](https://github.com/mr-superonion/FPFS)) compressing image
 to catalog. It is a simple code to infer shear from the catalog with correction for noise bias
 
+----
 
 ## Installation
 
@@ -16,10 +18,6 @@ For developers:
 ```shell
 git clone https://github.com/mr-superonion/imPT.git
 pip install -e . --user
-```
-before running code, users need to setup the environment by
-```shell
-source impt_config
 ```
 
 ## Summary
