@@ -27,6 +27,6 @@ export TF_CPP_MIN_LOG_LEVEL=10
 
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
-export OMP_NUM_THREAD=1
+export OMP_NUM_THREADS=1
 
 echo "Your shell is now configured to run impt standard library"

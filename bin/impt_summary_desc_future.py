@@ -65,8 +65,14 @@ class Worker(object):
         # setup processor
         self.catdir = cparser.get("procsim", "cat_dir")
         self.sum_dir = cparser.get("procsim", "sum_dir")
-        ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
-        self.cov_mat = fitsio.read(ncov_fname)
+        self.ncov_fname = cparser.get(
+            "FPFS", "ncov_fname",
+            fallback="",
+        )
+        if len(self.ncov_fname) == 0 or not os.path.isfile(self.ncov_fname):
+            # estimate and write the noise covariance
+            self.ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
+        self.cov_mat = fitsio.read(self.ncov_fname)
         # FPFS parameters
         self.ratio = cparser.getfloat("FPFS", "ratio")
         self.c0 = cparser.getfloat("FPFS", "c0")
@@ -76,6 +82,7 @@ class Worker(object):
         self.noise_rev = cparser.getboolean("FPFS", "noise_rev", fallback=True)
         # survey parameter
         self.magz = cparser.getfloat("survey", "mag_zero")
+        self.band = cparser.get("survey", "band")
         # This task change the cut on one observable and see how the biases
         # changes.
         # Here is  the observable used for test
@@ -135,15 +142,16 @@ class Worker(object):
                     beta=self.beta,
                     noise_rev=self.noise_rev,
                 )
-                b = "a"
                 in_nm1 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-0_rot%d_%s.fits" % (ifield, self.gver, irot, b),
+                    "src-%05d_%s-0_rot%d_%s.fits"
+                    % (ifield, self.gver, irot, self.band),
                 )
                 e1_1, r1_1 = self.get_sum_e_r(in_nm1, e1, enoise, res1, rnoise)
                 in_nm2 = os.path.join(
                     self.catdir,
-                    "src-%05d_%s-1_rot%d_%s.fits" % (ifield, self.gver, irot, b),
+                    "src-%05d_%s-1_rot%d_%s.fits"
+                    % (ifield, self.gver, irot, self.band),
                 )
                 e1_2, r1_2 = self.get_sum_e_r(in_nm2, e1, enoise, res1, rnoise)
                 out[icount, 0] = ifield
