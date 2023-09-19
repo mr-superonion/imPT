@@ -42,9 +42,9 @@ def simulate_gal_psf(scale, ind0, rcut):
         .array
     )
     psf_data = psf_data[32 - rcut : 32 + rcut, 32 - rcut : 32 + rcut]
-    gname = "g1-0000"
+    gname = "g1-0"
     gal_data = fpfs.simutil.make_isolate_sim(
-        gal_type="basic",
+        gal_type="mixed",
         psf_obj=psf_obj,
         gname=gname,
         seed=ind0,
@@ -53,7 +53,7 @@ def simulate_gal_psf(scale, ind0, rcut):
         scale=scale,
         do_shift=False,
         nrot=4,
-    )
+    )[0]
 
     # force detection at center
     indx = np.arange(32, 256, 64)
