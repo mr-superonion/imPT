@@ -70,7 +70,7 @@ class Worker(object):
         print("number of files per core is: %d" % self.n_per_c)
 
         # setup processor
-        self.catdir = cparser.get("procsim", "cat_dir")
+        self.catdir = cparser.get("files", "cat_dir")
         ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
         self.cov_mat = fitsio.read(ncov_fname)
         self.ratio = ratio
@@ -164,7 +164,7 @@ def process(args, pars, snr_min):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="fpfs procsim")
+    parser = ArgumentParser(description="fpfs cat2shear")
     parser.add_argument(
         "--config",
         required=True,
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
     cparser = ConfigParser()
     cparser.read(args.config)
-    sum_dir = cparser.get("procsim", "sum_dir")
+    sum_dir = cparser.get("files", "sum_dir")
     # FPFS parameters
     ratio = cparser.getfloat("FPFS", "ratio")
     c0 = cparser.getfloat("FPFS", "c0")

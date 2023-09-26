@@ -24,7 +24,7 @@ import numpy as np
 from impt.fpfs.future import prepare_func_e
 
 from argparse import ArgumentParser
-from configparser import ConfigParser
+from configparser import ConfigParser, ExtendedInterpolation
 
 
 def get_processor_count(pool, args):
@@ -51,7 +51,7 @@ class Worker(object):
         max_id=1000,
         ncores=1,
     ):
-        cparser = ConfigParser()
+        cparser = ConfigParser(interpolation=ExtendedInterpolation())
         cparser.read(config_name)
         # survey parameter
         nids = max_id - min_id
@@ -63,10 +63,11 @@ class Worker(object):
         print("number of files per core is: %d" % self.n_per_c)
 
         # setup processor
-        self.catdir = cparser.get("procsim", "cat_dir")
-        self.sum_dir = cparser.get("procsim", "sum_dir")
+        self.catdir = cparser.get("files", "cat_dir")
+        self.sum_dir = cparser.get("files", "sum_dir")
         self.ncov_fname = cparser.get(
-            "FPFS", "ncov_fname",
+            "FPFS",
+            "ncov_fname",
             fallback="",
         )
         if len(self.ncov_fname) == 0 or not os.path.isfile(self.ncov_fname):
@@ -159,7 +160,7 @@ class Worker(object):
                 out[icount, 2] = out[icount, 2] + (e1_1 + e1_2) / 2.0
                 out[icount, 3] = out[icount, 3] + (r1_1 + r1_2) / 2.0
                 del e1, enoise, res1, rnoise
-                jax.clear_backends()
+                # jax.clear_backends()
                 gc.collect()
         end_time = time.time()
         elapsed_time = (end_time - start_time) / 4.0
@@ -168,7 +169,7 @@ class Worker(object):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="fpfs procsim")
+    parser = ArgumentParser(description="fpfs catalog to shear")
     parser.add_argument(
         "--runid",
         default=0,

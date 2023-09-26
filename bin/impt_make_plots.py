@@ -21,7 +21,7 @@ from argparse import ArgumentParser
 from configparser import ConfigParser
 
 
-parser = ArgumentParser(description="fpfs procsim")
+parser = ArgumentParser(description="fpfs summary")
 parser.add_argument(
     "--config",
     required=True,
@@ -32,7 +32,7 @@ parser.add_argument(
 args = parser.parse_args()
 cparser = ConfigParser()
 cparser.read(args.config)
-sum_dir = cparser.get("procsim", "sum_dir")
+sum_dir = cparser.get("files", "sum_dir")
 shear = cparser.getfloat("distortion", "shear_value")
 
 flist = glob.glob("%s/bin_*.*.fits" % (sum_dir))

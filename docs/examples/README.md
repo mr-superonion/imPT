@@ -1,9 +1,6 @@
 # Examples
 
-## notebook examples
+## Shear Estimation
 
-See [here](./notebooks/README.md) for examples in jupyter notebooks.
-
-## command-line examples
-
-See [here](./command_lines/README.md) for examples in jupyter notebooks.
+Shear estimation with FPFS shear estimator can be found
+[here](./1_measure_shear.ipynb)

@@ -109,11 +109,11 @@ class Worker(object):
         print("number of files per core is: %d" % self.n_per_c)
         # print(self.min_id, self.max_id)
 
-        self.img_dir = cparser.get("procsim", "img_dir")
+        self.img_dir = cparser.get("files", "img_dir")
         self.rcut = cparser.getint("FPFS", "rcut")
         self.nnord = cparser.getint("FPFS", "nnord", fallback=4)
         ngrid = 2 * self.rcut
-        self.psf_fname = cparser.get("procsim", "psf_fname")
+        self.psf_fname = cparser.get("files", "psf_fname")
         self.band = cparser.get("survey", "band")
         self.nstd_f = nstd_map[self.band]
         self.noise_pow = np.ones((ngrid, ngrid)) * self.nstd_f**2.0 * ngrid**2.0
@@ -298,7 +298,7 @@ def process(args, pars):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="fpfs procsim")
+    parser = ArgumentParser(description="fpfs statistical error")
     parser.add_argument(
         "--config",
         required=True,

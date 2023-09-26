@@ -66,19 +66,22 @@ def simulate_gal_psf(scale, ind0, rcut):
 def do_test(scale, ind0, rcut):
     gal_data, psf_data, coords = simulate_gal_psf(scale, ind0, rcut)
     # test shear estimation
-    fpfs_task = fpfs.image.measure_source(psf_data, sigma_arcsec=0.5)
+    fpfs_task = fpfs.image.measure_source(
+        psf_data=psf_data,
+        sigma_arcsec=0.5,
+        pix_scale=scale,
+    )
     # linear observables
     # detection
     p1 = 32 - rcut
     p2 = 64 * 2 - rcut
     psf_data2 = jnp.pad(psf_data, ((p1, p1), (p2, p2)))
-    coords2 = fpfs.image.detect_sources(
+    coords2 = fpfs_task.detect_sources(
         gal_data,
         psf_data2,
-        sigmaf=fpfs_task.sigmaf,
-        sigmaf_det=fpfs_task.sigmaf_det,
         thres=0.01,
         thres2=0.00,
+        bound=0,
     )
     assert np.all(coords2 == coords)
     cat = fpfs_task.measure(gal_data, coords2)

@@ -63,8 +63,8 @@ class Worker(object):
         print("number of files per core is: %d" % self.n_per_c)
 
         # setup processor
-        self.catdir = cparser.get("procsim", "cat_dir")
-        self.sum_dir = cparser.get("procsim", "sum_dir")
+        self.catdir = cparser.get("files", "cat_dir")
+        self.sum_dir = cparser.get("files", "sum_dir")
         self.do_noirev = cparser.getboolean("FPFS", "do_noirev")
         if self.do_noirev:
             ncov_fname = os.path.join(self.catdir, "cov_matrix.fits")
@@ -161,7 +161,7 @@ class Worker(object):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="fpfs procsim")
+    parser = ArgumentParser(description="fpfs cat2shear")
     parser.add_argument(
         "--runid",
         default=0,
