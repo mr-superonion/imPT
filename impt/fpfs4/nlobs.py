@@ -155,6 +155,58 @@ class FpfsWeightDetect(FpfsObsBase):
         return out
 
 
+class FpfsWeightSelect4(FpfsObsBase):
+    """FPFS selection weight"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 32
+        super().__init__(
+            params=params,
+            parent=parent,
+            func_name=func_name,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        # selection on flux
+        w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+
+        # selection on size (lower limit)
+        # (M00 + M20) / M00 > lower_r2_lower
+        r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
+        w2l = self.ufunc(r2l, 0.0, self.params.sigma_r2)
+
+        # selection on size (upper limit)
+        # (M00 + M20) / M00 < upper_r2
+        r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
+        w2u = self.ufunc(r2u, 0.0, self.params.sigma_r2)
+        # w2l = 1.
+        # w2u = 1.
+        out = w0 * w2l * w2u
+        return out
+
+
+class FpfsWeightDetect4(FpfsObsBase):
+    """FPFS detection weight"""
+
+    def __init__(self, params, parent=None, func_name="ts2"):
+        self.nmodes = 32
+        super().__init__(
+            params=params,
+            parent=parent,
+            func_name=func_name,
+        )
+
+    @partial(jit, static_argnums=(0,))
+    def _base_func(self, cat):
+        out = 1.0
+        for i in range(npeak):
+            # v_i - M00 * lower_v > sigma_v
+            vp = cat[did["v%d" % i]] - cat[did["m00"]] * self.params.lower_v
+            out = out * self.ufunc(vp, self.params.sigma_v, self.params.sigma_v)
+        return out
+
+
 class FpfsE1(FpfsObsBase):
     """FPFS ellipticity (first component)"""
 
