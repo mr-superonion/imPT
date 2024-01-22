@@ -51,8 +51,8 @@ class FpfsExtParams(struct.PyTreeNode):
 
     # size selection
     # cut on size
-    lower_r2: float = struct.field(pytree_node=False, default=0.03)
-    upper_r2: float = struct.field(pytree_node=False, default=2.0)
+    lower_r2: float = struct.field(pytree_node=False, default=0.05)
+    upper_r2: float = struct.field(pytree_node=False, default=1.5)
     # softening paramter for cut on size
     sigma_r2: float = struct.field(pytree_node=False, default=0.2)
 
@@ -61,8 +61,6 @@ class FpfsExtParams(struct.PyTreeNode):
     lower_v: float = struct.field(pytree_node=False, default=0.005)
     # softening parameter for cut on peak
     sigma_v: float = struct.field(pytree_node=False, default=0.2)
-
-    sigma_min: float = struct.field(pytree_node=False, default=0.01)
 
 
 class FpfsObsBase(NlBase):
@@ -90,9 +88,8 @@ class FpfsObsBase(NlBase):
 class FpfsExtE1(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
-        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -103,11 +100,7 @@ class FpfsExtE1(FpfsObsBase):
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
-        # w2 = self.ufunc(
-        #     cat[did["m00"]] + cat[did["m20"]],
-        #     self.params.sigma_r2 * 3,
-        #     self.params.sigma_r2,
-        # )
+        # w0u = self.ufunc(300.0 - cat[did["m00"]], 0.0, self.params.sigma_m00)
 
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
@@ -120,12 +113,11 @@ class FpfsExtE1(FpfsObsBase):
         # M00 (upper_r2 - 1) - M20 > 0
         r2u = cat[did["m00"]] * (self.params.upper_r2 - 1.0) - cat[did["m20"]]
         w2u = self.ufunc(r2u, self.params.sigma_r2, self.params.sigma_r2)
-        wsel = w0 * w2l * w2u  # * w2
+        wsel = w0 * w2l * w2u
 
         # detection
         wdet = 1.0
-        for i in range(0, npeak, self.skip):
-            # v_i > lower_v
+        for i in range(0, npeak):
             wdet = wdet * self.ufunc(
                 cat[did["v%d" % i]],
                 self.params.lower_v,
@@ -143,9 +135,8 @@ class FpfsExtE1(FpfsObsBase):
 class FpfsExtE2(FpfsObsBase):
     """FPFS selection weight"""
 
-    def __init__(self, params, parent=None, skip=1, func_name="ts2"):
+    def __init__(self, params, parent=None, func_name="ts2"):
         self.nmodes = 31
-        self.skip = skip
         super().__init__(
             params=params,
             parent=parent,
@@ -156,11 +147,14 @@ class FpfsExtE2(FpfsObsBase):
     def _base_func(self, cat):
         # selection on flux
         w0 = self.ufunc(cat[did["m00"]], self.params.lower_m00, self.params.sigma_m00)
+        # w0u = self.ufunc(300.0 - cat[did["m00"]], 0.0, self.params.sigma_m00)
+
         # selection on size (lower limit)
         # (M00 + M20) / M00 > lower_r2_lower
         # M00 ( 1 - lower_r2_lower) + M20 > 0
         r2l = cat[did["m00"]] * (1.0 - self.params.lower_r2) + cat[did["m20"]]
         w2l = self.ufunc(r2l, self.params.sigma_r2, self.params.sigma_r2)
+
         # selection on size (upper limit)
         # (M00 + M20) / M00 < upper_r2
         # M00 (1 - upper_r2) + M20 < 0
@@ -171,7 +165,7 @@ class FpfsExtE2(FpfsObsBase):
         wsel = w0 * w2l * w2u
         # detection
         wdet = 1.0
-        for i in range(0, npeak, self.skip):
+        for i in range(0, npeak):
             # v_i > lower_v
             wdet = wdet * self.ufunc(
                 cat[did["v%d" % i]],
@@ -194,13 +188,12 @@ def prepare_func_e(
     c2=25.6,
     alpha=0.27,
     beta=0.83,
-    snr_min=12,
-    r2_min=0.03,
-    r2_max=2.0,
+    snr_min=12,  # SNR cut (lower limit)
+    r2_min=0.05,  # resuolution cut (lower limit)
+    r2_max=2.0,  # resuolution cut (upper limit)
     g_comp=1,
     funcnm="ss2",
     noise_rev=True,
-    sigma_min=0.01,
 ):
     if g_comp not in [1, 2]:
         raise ValueError("g_comp can only be 1 or 2")
@@ -221,17 +214,19 @@ def prepare_func_e(
         lower_m00=snr_min * std_m00,
         lower_r2=r2_min,
         upper_r2=r2_max,
-        lower_v=ratio * std_v0 * 0.4,
-        sigma_m00=ratio * std_m00 + sigma_min,
-        sigma_r2=ratio * std_m20 + sigma_min,
-        sigma_v=ratio * std_v0 + sigma_min,
+        lower_v=ratio * std_v0 * 0.5,
+        sigma_m00=ratio * std_m00,
+        sigma_r2=ratio * std_m20,
+        sigma_v=ratio * std_v0,
     )
     if g_comp == 1:
         ell = FpfsExtE1(params, func_name=funcnm)
         res = RespG1(ell)
-    else:
+    elif g_comp == 2:
         ell = FpfsExtE2(params, func_name=funcnm)
         res = RespG2(ell)
+    else:
+        raise ValueError("g_comp can only be 1 or 2")
     if noise_rev:
         enoise = BiasNoise(ell, cov_mat)
         rnoise = BiasNoise(res, cov_mat)

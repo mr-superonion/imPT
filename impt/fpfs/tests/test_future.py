@@ -14,6 +14,7 @@
 """This unit test checks whether the FPFS nonlinear observables can do
 arithmetic sum, subtract, multiply and divide correctly.
 """
+import jax
 import fpfs
 import impt
 import galsim
@@ -53,7 +54,7 @@ def simulate_gal_psf(scale, ind0, rcut):
         nx=256,
         scale=scale,
         do_shift=False,
-        nrot=4,
+        nrot_per_gal=4,
     )[0]
 
     # force detection at center
@@ -92,6 +93,27 @@ def do_test(scale, ind0, rcut):
     print(shear)
     print(np.abs(shear + 0.02))
     assert np.all(np.abs(shear + 0.02) < test_thres)
+
+    cat_obj = fpfs.catalog.FpfsCatalog(
+        m00_min=0.0,
+        r2_min=0.0,
+        v_min=0.0,
+        sigma_m00=0.4,
+        sigma_r2=0.8,
+        sigma_v=0.2,
+    )
+    outcome = jnp.sum(
+        jax.lax.map(jax.jit(cat_obj.measure_g1_noise_correct), cat), axis=0
+    )
+    shear1 = outcome[0] / outcome[1]
+    assert np.all(np.abs(shear1 + 0.02) < test_thres)
+    outcome = jnp.sum(
+        jax.lax.map(jax.jit(cat_obj.measure_g2_noise_correct), cat), axis=0
+    )
+    shear2 = outcome[0] / outcome[1]
+    assert np.all(np.abs(shear2) < 5e-5)
+    e1, r1 = outcome
+    print(e1, r1)
     return
 
 
